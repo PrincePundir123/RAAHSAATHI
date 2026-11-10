@@ -32,14 +32,21 @@ def build_safety_map(center=[28.6139, 77.2090], zoom=13):
     except Exception:
         pass
 
-    # Select tile provider: CARTO with API key if available, otherwise robust free OpenStreetMap
-    carto_api_key = os.getenv("CARTO_API_KEY", "").strip() or os.getenv("MAP_API_KEY", "").strip()
-    if carto_api_key:
+    # Check for Stadia Maps or CARTO API key, otherwise default to OpenStreetMap
+    stadia_api_key = os.getenv("STADIA_API_KEY", "").strip() or os.getenv("MAP_API_KEY", "").strip()
+    carto_api_key = os.getenv("CARTO_API_KEY", "").strip()
+
+    if stadia_api_key:
+        # Stadia Maps Alidade Smooth - crisp modern style
+        tiles = f"https://tiles.stadiamaps.com/tiles/alidade_smooth/{{z}}/{{x}}/{{y}}{{r}}.png?api_key={stadia_api_key}"
+        attr = '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        m = folium.Map(location=center, zoom_start=zoom, tiles=tiles, attr=attr)
+    elif carto_api_key:
         tiles = f"https://{{s}}.basemaps.cartocdn.com/light_all/{{z}}/{{x}}/{{y}}{{r}}.png?api_key={carto_api_key}"
         attr = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
         m = folium.Map(location=center, zoom_start=zoom, tiles=tiles, attr=attr)
     else:
-        # Standard OpenStreetMap: 100% free, no API key required, zero warnings
+        # Standard OpenStreetMap: 100% free, no API key required
         m = folium.Map(location=center, zoom_start=zoom, tiles='OpenStreetMap')
 
     db_path = os.path.join(BASE_DIR, 'backend', 'safewalk.db')
