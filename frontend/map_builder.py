@@ -97,29 +97,136 @@ def build_safety_map(center=[28.6139, 77.2090], zoom=13):
     return m
 
 
-def add_routes_to_map(m, safe_route, fast_route):
+def add_routes_to_map(m, safe_route, fast_route, selected_segment_id=None):
     if not HAS_FOLIUM or m is None:
         return m
 
-    # Safest Route (Emerald Green)
-    if safe_route and safe_route.get('points'):
+    # Fastest Route (Coral / Rose Dashed) shown underneath as baseline comparison
+    if fast_route and fast_route.get('points') and fast_route != safe_route:
+        folium.PolyLine(fast_route['points'], color='#E11D48', weight=4, opacity=0.6, dash_array='8, 8',
+                        tooltip=f"Fastest Route ({fast_route.get('safety_avg', 50)}/100)"
+                        ).add_to(m)
+
+    # Check if Segment-Level Intelligence is present on the safe route
+    seg_intel = safe_route.get("segment_intelligence")
+    segments = seg_intel.get("segments", []) if seg_intel else []
+
+    if segments:
+        # Render segmented polyline with accessible, explainable styling
+        for seg in segments:
+            pts = seg.get("points", [])
+            if not pts or len(pts) < 2:
+                continue
+
+            seg_id = seg.get("segment_id")
+            score = seg.get("safety_score", 70)
+            q_class = seg.get("qualitative_class", "Mixed safety indicators")
+            conf_level = seg.get("confidence", {}).get("confidence_level", "Medium confidence")
+            is_selected = (selected_segment_id == seg_id)
+
+            # Accessible Visual Distinction:
+            # - Green: fewer observed risk indicators
+            # - Amber: mixed indicators
+            # - Red: elevated reported-risk indicators
+            # - Grey / dashed: insufficient data
+            dash_pattern = None
+            if q_class == "Insufficient data" or conf_level == "Insufficient data":
+                color = '#64748B'  # Slate grey
+                dash_pattern = '6, 6'
+            elif score >= 75:
+                color = '#059669'  # Emerald green (fewer observed risk indicators)
+            elif score >= 50:
+                color = '#D97706'  # Amber (mixed indicators)
+            else:
+                color = '#DC2626'  # Crimson Red (elevated reported-risk indicators)
+
+            # Selected segment highlight
+            line_weight = 10 if is_selected else 6
+            line_opacity = 1.0 if is_selected else 0.85
+            if is_selected:
+                # Add a pulsing outer glow for the active selected segment
+                folium.PolyLine(
+                    pts,
+                    color='#38BDF8',
+                    weight=16,
+                    opacity=0.55
+                ).add_to(m)
+
+            tooltip_html = (
+                f"<b>{seg.get('title')}</b><br>"
+                f"Score: <b>{score}/100</b> ({q_class})<br>"
+                f"Confidence: <b>{conf_level}</b><br>"
+                f"Length: {round(seg.get('distance_m', 0))}m • {seg.get('road_name')}"
+            )
+
+            popup_html = (
+                f"<div style='font-family:sans-serif; min-width:180px;'>"
+                f"<b style='color:{color}; font-size:13px;'>{seg.get('title')}</b><br>"
+                f"<span>Score: <b>{score}/100</b></span><br>"
+                f"<span>Status: <i>{q_class}</i></span><br>"
+                f"<span>Confidence: <b>{conf_level}</b></span><br>"
+                f"<hr style='margin:4px 0;'><small>{seg.get('explanation', '')[:120]}...</small>"
+                f"</div>"
+            )
+
+            line_args = {
+                "locations": pts,
+                "color": color,
+                "weight": line_weight,
+                "opacity": line_opacity,
+                "tooltip": folium.Tooltip(tooltip_html),
+                "popup": folium.Popup(popup_html, max_width=260)
+            }
+            if dash_pattern:
+                line_args["dash_array"] = dash_pattern
+
+            folium.PolyLine(**line_args).add_to(m)
+
+            # Small clickable midpoint anchor marker
+            mid = seg.get("midpoint")
+            if mid and len(mid) == 2:
+                folium.CircleMarker(
+                    location=mid,
+                    radius=5 if not is_selected else 8,
+                    color="#0F172A",
+                    weight=1.5,
+                    fill=True,
+                    fill_color=color,
+                    fill_opacity=0.9,
+                    tooltip=f"Click to inspect {seg.get('segment_id')}"
+                ).add_to(m)
+
+    elif safe_route and safe_route.get('points'):
+        # Fallback to single polyline if no segmentation available
         pts = safe_route['points']
         folium.PolyLine(pts, color='#059669', weight=7, opacity=0.9,
-                        tooltip=f"🟢 Safest Route ({safe_route.get('safety_avg', 70)}/100)"
+                        tooltip=f"Safest Route ({safe_route.get('safety_avg', 70)}/100)"
                         ).add_to(m)
-        # Start & End markers
-        folium.Marker(pts[0], popup="Start Location", icon=folium.Icon(color="green", icon="play")).add_to(m)
-        folium.Marker(pts[-1], popup="Destination", icon=folium.Icon(color="blue", icon="flag")).add_to(m)
 
-    # Fastest Route (Coral / Rose Dashed)
-    if fast_route and fast_route.get('points') and fast_route != safe_route:
-        folium.PolyLine(fast_route['points'], color='#E11D48', weight=5, opacity=0.75, dash_array='10',
-                        tooltip=f"🔴 Fastest Route ({fast_route.get('safety_avg', 50)}/100)"
-                        ).add_to(m)
+    # Route Origin & Destination Markers
+    all_pts = safe_route.get('points', [])
+    if all_pts:
+        folium.Marker(
+            all_pts[0],
+            popup="<b>Start Location</b>",
+            icon=folium.Icon(color="green", icon="play", prefix="fa")
+        ).add_to(m)
+        folium.Marker(
+            all_pts[-1],
+            popup="<b>Destination</b>",
+            icon=folium.Icon(color="blue", icon="flag", prefix="fa")
+        ).add_to(m)
 
     # Danger Zones
     for lat, lng in safe_route.get('danger_zones', []) if safe_route else []:
-        folium.CircleMarker([lat, lng], radius=15, color='#E11D48',
-                            fill=True, fill_color='#E11D48', fill_opacity=0.45,
-                            popup='⚠️ High Risk / Danger Zone').add_to(m)
+        folium.CircleMarker(
+            [lat, lng],
+            radius=14,
+            color='#E11D48',
+            fill=True,
+            fill_color='#E11D48',
+            fill_opacity=0.35,
+            popup='Active Danger / Low-Score Corridor'
+        ).add_to(m)
+
     return m
