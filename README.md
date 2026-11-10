@@ -169,6 +169,11 @@ python backend/cli_demo.py
 
 ### 5️⃣ Running Test Suites
 
+#### Run Segment Intelligence & Confidence Tests:
+```bash
+python tests/test_segment_intelligence_unit.py
+```
+
 #### Run Backend Unit Tests:
 ```bash
 python backend/test_m2_backend.py
@@ -181,7 +186,35 @@ python backend/test_integration.py
 
 ---
 
-## 🏆 5. Key Differentiators & Judge Talking Points
+## 🔍 5. Explainable, Segment-Level Route Intelligence
+
+SafeWalk v2.0 introduces **Segment-Level Route Intelligence** — dividing walking routes into real ~100–200m road segments and explaining the exact evidence behind every section:
+
+### 1. Transparent Scoring Engine
+- **Qualitative Risk Labels**:
+  - 🟢 `Lower reported-risk indicators` (Score $\ge 75$)
+  - 🟡 `Mixed safety indicators` (Score $50 - 74$)
+  - 🔴 `Elevated reported-risk indicators` (Score $< 50$)
+  - ⚪ `Insufficient data` (Unverified / missing data)
+- Evaluates:
+  - **Street Lighting**: OpenStreetMap survey tags (`highway=street_lamp`, `lit=yes/no`)
+  - **Commercial Presence**: Mapped shops and public venues offering natural surveillance (distinguishing mapped venues from verified operating hours)
+  - **Community Reports**: Decayed reports ($e^{-0.693 \cdot \Delta t / 48}$) with proximity falloff and provenance IDs
+  - **Emergency Assistance**: Distance to mapped police stations and hospitals
+  - **Diurnal Curve**: Continuous sinusoidal time penalty up to $-30$ points at 02:00 AM
+
+### 2. Independent 4-Pillar Data-Confidence Engine
+Confidence is strictly separated from safety:
+1. **Completeness (40%)**: Coverage across lighting, POIs, incidents, and emergency services.
+2. **Freshness (25%)**: Timestamp recency of spatial queries and community reports.
+3. **Source Provenance (20%)**: Distinguishes public GIS registries, corroborated reports, and single unverified submissions.
+4. **Corroboration (15%)**: Cross-verification across independent indicators.
+
+Classified into: `High confidence`, `Medium confidence`, `Low confidence`, and `Insufficient data`.
+
+---
+
+## 🏆 6. Key Differentiators & Judge Talking Points
 
 | Feature | Competitors (Google Maps, Waze) | SafeWalk v2.0 |
 | :--- | :--- | :--- |
