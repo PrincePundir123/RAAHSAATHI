@@ -123,9 +123,18 @@ GEMINI_API_KEY=your_gemini_api_key_here
 
 ---
 
-### 2️⃣ Running the Streamlit Web Application
+### 2️⃣ Running with Docker (Recommended)
 
-Launch the Streamlit web interface locally:
+You can launch the entire stack using Docker Compose:
+
+```bash
+docker compose up --build
+```
+The app will be accessible at `http://localhost:8501`.
+
+---
+
+### 3️⃣ Running the Streamlit Web Application Locally
 
 ```bash
 streamlit run frontend/app.py
