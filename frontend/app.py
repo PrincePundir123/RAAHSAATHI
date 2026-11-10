@@ -466,9 +466,15 @@ with tab1:
     default_start = landmarks[0] if len(landmarks) > 0 else f"Clock Tower, {st.session_state.city}"
     default_dest = landmarks[1] if len(landmarks) > 1 else f"UPES Bidholi, {st.session_state.city}"
 
-    if "direct_start_text_input" not in st.session_state or st.session_state.get("active_city_tracker") != st.session_state.city:
+    # If pending route targets were set by SafeStops, apply them before widget instantiation
+    if st.session_state.get("pending_route_start"):
+        st.session_state["direct_start_text_input"] = st.session_state.pop("pending_route_start")
+    elif "direct_start_text_input" not in st.session_state or st.session_state.get("active_city_tracker") != st.session_state.city:
         st.session_state["direct_start_text_input"] = default_start
-    if "direct_dest_text_input" not in st.session_state or st.session_state.get("active_city_tracker") != st.session_state.city:
+
+    if st.session_state.get("pending_route_dest"):
+        st.session_state["direct_dest_text_input"] = st.session_state.pop("pending_route_dest")
+    elif "direct_dest_text_input" not in st.session_state or st.session_state.get("active_city_tracker") != st.session_state.city:
         st.session_state["direct_dest_text_input"] = default_dest
     st.session_state["active_city_tracker"] = st.session_state.city
 
@@ -809,8 +815,8 @@ with tab_safestops:
     # Quick Emergency Action
     if quick_help_btn and nearby_stops:
         target_help = nearby_stops[0]
-        st.session_state["direct_start_text_input"] = f"{st.session_state.city}"
-        st.session_state["direct_dest_text_input"] = target_help["name"]
+        st.session_state["pending_route_start"] = f"{st.session_state.city}"
+        st.session_state["pending_route_dest"] = target_help["name"]
         st.success(f"Navigating to nearest help: **{target_help['name']}** ({target_help['distance_m']}m away)!")
         # Auto-trigger route planning
         r_res = plan_safe_route(f"{ref_lat},{ref_lng}", f"{target_help['latitude']},{target_help['longitude']}", hour=travel_hour, fallback_city=st.session_state.city)
@@ -882,8 +888,8 @@ with tab_safestops:
                             st.caption("No website")
                     with c_act3:
                         if st.button("Walk Here ➔", key=f"nav_ss_{s['id']}", use_container_width=True):
-                            st.session_state["direct_start_text_input"] = f"{ref_lat},{ref_lng}"
-                            st.session_state["direct_dest_text_input"] = f"{s['latitude']},{s['longitude']}"
+                            st.session_state["pending_route_start"] = f"{ref_lat},{ref_lng}"
+                            st.session_state["pending_route_dest"] = f"{s['latitude']},{s['longitude']}"
                             # Calculate route
                             r_res = plan_safe_route(f"{ref_lat},{ref_lng}", f"{s['latitude']},{s['longitude']}", hour=travel_hour, fallback_city=st.session_state.city)
                             if r_res["success"]:
