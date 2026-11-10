@@ -42,6 +42,16 @@ from journey_guardian_service import (
     get_journey_by_share_token,
     get_latest_journey_location
 )
+from multilingual_voice_reporting import detect_language, extract_incident_draft, detect_duplicate_candidates
+from community_verification_moderation import (
+    init_moderation_tables,
+    cast_community_vote,
+    apply_moderator_action,
+    get_moderation_queue,
+    get_incident_moderation_history
+)
+from offline_sync_service import queue_offline_report, process_offline_sync_queue, get_queued_offline_reports
+from safety_intelligence_service import get_safety_intelligence_summary, get_geographic_clusters
 
 # AI Backend imports
 from genai_layer import (
