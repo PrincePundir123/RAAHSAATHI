@@ -32,8 +32,15 @@ def build_safety_map(center=[28.6139, 77.2090], zoom=13):
     except Exception:
         pass
 
-    # Clean, vibrant Light Positron tile theme for max legibility and eye-catchy visual contrast
-    m = folium.Map(location=center, zoom_start=zoom, tiles='CartoDB positron')
+    # Select tile provider: CARTO with API key if available, otherwise robust free OpenStreetMap
+    carto_api_key = os.getenv("CARTO_API_KEY", "").strip() or os.getenv("MAP_API_KEY", "").strip()
+    if carto_api_key:
+        tiles = f"https://{{s}}.basemaps.cartocdn.com/light_all/{{z}}/{{x}}/{{y}}{{r}}.png?api_key={carto_api_key}"
+        attr = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        m = folium.Map(location=center, zoom_start=zoom, tiles=tiles, attr=attr)
+    else:
+        # Standard OpenStreetMap: 100% free, no API key required, zero warnings
+        m = folium.Map(location=center, zoom_start=zoom, tiles='OpenStreetMap')
 
     db_path = os.path.join(BASE_DIR, 'backend', 'safewalk.db')
     if not os.path.exists(db_path):
