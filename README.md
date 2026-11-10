@@ -174,12 +174,17 @@ python backend/cli_demo.py
 python tests/test_segment_intelligence_unit.py
 ```
 
-#### Run Backend Unit Tests:
+#### Run SafeStops & Journey Guardian Tests:
 ```bash
-python backend/test_m2_backend.py
+python tests/test_safestops_guardian_unit.py
 ```
 
-#### Run End-to-End Integration Tests:
+#### Run Voice Reporting, Moderation, PWA & Intelligence Tests:
+```bash
+python tests/test_features_4_5_6_7_unit.py
+```
+
+#### Run Backend Integration Tests:
 ```bash
 python backend/test_integration.py
 ```
@@ -214,7 +219,39 @@ Classified into: `High confidence`, `Medium confidence`, `Low confidence`, and `
 
 ---
 
-## 🏆 6. Key Differentiators & Judge Talking Points
+## 🛡️ 6. SafeStops & Live Journey Guardian
+
+### SafeStops (Nearby Verified Assistance)
+- Identifies nearby police stations, hospitals, campus security desks (UPES Bidholi & Kandoli), and 24/7 pharmacies.
+- Distinguishes `PUBLIC FACILITY` from audited `PARTNER-VERIFIED` safe havens.
+- **One-Click Emergency Rerouting**: Tap *"Navigate to Nearest Help"* to instantly calculate the safest walking route.
+
+### Live Journey Guardian (Real-Time Sharing & Escalation)
+- **State Machine**: `JOURNEY_STARTED` ➔ `CHECK_IN_PENDING` ➔ `CHECK_IN_CONFIRMED` ➔ `MISSED_CHECK_IN` ➔ `CONTACT_ALERTED` ➔ `ASSISTANCE_ACKNOWLEDGED` ➔ `JOURNEY_COMPLETED`.
+- **Cryptographic Sharing**: High-entropy tokens (`secrets.token_urlsafe`) stored as SHA-256 hashes.
+- **Server-Side Escalation Job**: Evaluates missed check-in deadlines + grace periods server-side and automatically notifies trusted contacts.
+- **Contact Acknowledgment**: Allows contacts to select *"I am responding"*, notifying the user in real time.
+
+---
+
+## 🎙️ 7. Multilingual Voice Reporting, Moderation & Safety Intelligence
+
+### Voice & Multilingual Reporting (Feature 4 & 6)
+- Supports Hindi (Devanagari), English, and **Hinglish** (Romanized Hindi).
+- Generates editable AI incident drafts requiring explicit user confirmation before publication.
+- **PWA & Offline Queue**: Unsent reports are stored with idempotency keys (`client_submission_id`) and synchronize automatically when connectivity is restored.
+
+### Trustworthy Moderation (Feature 5)
+- Dual-dimension status: Moderation status (`PUBLISHED`, `PENDING_REVIEW`, `HIDDEN`) vs Evidence status (`UNVERIFIED`, `COMMUNITY_CORROBORATED`, `OFFICIALLY_SOURCED`).
+- Enforces 1 vote per authenticated account. Community votes can corroborate reports (3+ votes), but never award official government verification badges.
+
+### Safety Intelligence Dashboard (Feature 7)
+- Aggregated decision-support metrics for campus authorities and municipal moderators.
+- Measures lighting/infrastructure outages and maps privacy-preserving 1.1km risk clusters.
+
+---
+
+## 🏆 8. Key Differentiators & Judge Talking Points
 
 | Feature | Competitors (Google Maps, Waze) | SafeWalk v2.0 |
 | :--- | :--- | :--- |
