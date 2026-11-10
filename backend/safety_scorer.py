@@ -20,6 +20,17 @@ def _calculate_dynamic_time_penalty(hour: int) -> int:
 
 
 def calculate_safety_score(lat: float, lng: float, hour: int = 12) -> int:
+    """
+    Computes an integrated safety score (0-100) for a given GPS point.
+
+    Factors:
+      1. Diurnal/Time-of-day penalty (0 to -30).
+      2. Dynamic weighted community incidents with half-life decay.
+      3. Streetlight coverage from OpenStreetMap grid.
+      4. POI activity density (commercial shops, open establishments).
+      5. Police station proximity (+10 bonus if nearby).
+      6. Dark alley / narrow unlit road detection penalty.
+    """
     score = 100
 
     # Factor 1: Smooth Continuous Time of Day Penalty
