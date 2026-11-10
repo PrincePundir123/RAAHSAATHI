@@ -1,296 +1,278 @@
-# 🛡️ SafeWalk v2.0
+# 🛡️ SafeWalk (RaahSaathi)
 > **"Google Maps shows the fastest route. SafeWalk shows the safest route — for any city worldwide, updated in real-time by women themselves."**
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
-[![Gemini AI](https://img.shields.io/badge/AI-Gemini%20AI-orange.svg)](https://deepmind.google/technologies/gemini/)
+[![AI Gemini AI](https://img.shields.io/badge/AI-Gemini%20AI-orange.svg)](https://deepmind.google/technologies/gemini/)
 [![RAG Architecture](https://img.shields.io/badge/RAG-WHO%20%26%20NCRB%20Grounded-green.svg)]()
-[![OpenStreetMap / OSRM](https://img.shields.io/badge/Navigation-OSRM%20%2B%20Overpass-brightgreen.svg)]()
-[![Streamlit UI](https://img.shields.io/badge/Frontend-Streamlit%20%2B%20Folium-red.svg)]()
-[![Security Hardened](https://img.shields.io/badge/Security-OWASP%20Hardened-success.svg)]()
+[![Navigation OSRM + Overpass](https://img.shields.io/badge/Navigation-OSRM%20%2B%20Overpass-brightgreen.svg)]()
+[![Frontend Streamlit + Folium](https://img.shields.io/badge/Frontend-Streamlit%20%2B%20Folium-red.svg)]()
+[![Security OWASP Hardened](https://img.shields.io/badge/Security-OWASP%20Hardened-success.svg)]()
 
 ---
 
-## 📌 1. Executive Summary
+## 📌 1. Project Overview & Problem Statement
 
-Traditional navigation apps prioritize speed ($m/min$) over human safety. For women walking alone—especially at night or in unfamiliar cities—the fastest route is often through unlit alleys or poorly monitored areas.
+Mainstream navigation applications (such as Google Maps and Apple Maps) optimize exclusively for **speed** ($\text{Distance} \div \text{Time}$). For a woman commuting alone late at night, shaving 90 seconds by cutting through an unlit back-alley, an abandoned underpass, or an unmonitored industrial stretch can be hazardous.
 
-**SafeWalk v2.0** solves this by introducing **Dual-Route Safety Optimization**:
-- 🟢 **Safest Route**: Calculated using real road geometry (OSRM), streetlight coverage, POI density, police proximity, and real-time community report weights.
-- 🔴 **Fastest Route**: The standard shortest-time path, highlighted alongside danger zone markers.
+**SafeWalk (RaahSaathi)** re-engineers urban pedestrian navigation from the ground up by prioritizing **human safety and survival over raw transit time**.
 
-Powered by **Google Gemini AI** and **RAG Knowledge Base (WHO & NCRB Guidelines)**, SafeWalk converts raw navigation into actionable, AI-guided safety briefings tailored to the user's journey.
+![Problem Comparison Matrix](docs/screenshots/graphic_01_problem_matrix.png)
+
+### Key Value Propositions
+* 🟢 **Dual-Route Safety Optimization:** Simultaneously calculates the standard shortest-path (*Fastest Route* in Coral Red) and the algorithmically optimized *Safest Route* (Emerald Green) avoiding unlit and high-risk zones.
+* 🔍 **Explainable Segment-Level Intelligence:** Slices walking routes into 100m–200m atomic road segments, showing explicit evidence for lighting, commercial footfall, diurnal decay, and data confidence.
+* 🚨 **SafeStops Assistance Havens:** One-tap emergency diversion routing to verified 24/7 safe physical spaces (Police, Trauma Centers, University Security Desks, Late-Night Chemists).
+* 🛡️ **Live Journey Guardian:** Cryptographically signed live trip monitoring, automated periodic check-ins, and zero-auth simulated SMS alerts with live response acknowledgement.
+* 🎙️ **Multilingual AI Voice Reporting:** Conversational incident reporting in Hindi, English, and Romanized Hinglish with AI structured entity extraction and review gating.
+* 📶 **Progressive Web App (PWA) & Offline Sync:** Client-side IndexedDB caching and cryptographic idempotency keys allowing full navigation and offline hazard queueing in low-network transit zones.
+* 📊 **Institutional Safety Intelligence Dashboard:** Real-time spatial clustering (1.1km generalized privacy cells) and municipal infrastructure gap tracking without tracking individual users.
 
 ---
 
-## 🏗️ 2. System Architecture & Workflow
+## 🏗️ 2. Comprehensive System Architecture
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│                                   SAFEWALK WORKFLOW                                      │
-└─────────────────────────────────────────────────────────────────────────────────────────┘
-   [User Input]          [Location & Route Engine]              [Safety Scoring Engine]
- Start & Destination  ──► Multi-Stage High-Precision Geocoder  ──► HTTPS OSRM Foot Walking Routes
-                         └─► Overpass API Safety Data          ├─► Streetlight Coverage
-                             (Police, Lights, POIs)            ├─► Weighted Incident Decay
-                                                               └─► Dark Alley Penalties
-                                                                          │
-                                                                          ▼
-   [AI & RAG Layer]            [Community & News Flywheel]       [Dual Route Output]
- RAG WHO/NCRB Engine  ◄─── Real-Time Incident Persistence  ◄─── 🟢 Safest Route (Score: 84)
- Gemini Flash Briefing     ├─► Gemini NLP Text Parser          🔴 Fastest Route (Score: 52)
- 5-Bullet Guidance         ├─► AI News & Alert Ingestor        📍 Danger Zone Markers
-                           └─► 3+ Vote Community Verification
+SafeWalk is built as a modular, low-latency geospatial intelligence engine:
+
+```mermaid
+flowchart TD
+    subgraph Client ["Frontend & Client Layer (Streamlit + PWA)"]
+        UI["Interactive Folium Map & Streamlit UI"]
+        PWA["Service Worker & Offline Cache"]
+        Audio["Voice & Audio Recorder (WebRTC)"]
+    end
+
+    subgraph Routing ["Geospatial Routing & Segment Engine"]
+        Geo["Multi-Stage Landmark Geocoder"]
+        OSRM["OSRM Pedestrian Routing Engine"]
+        Segmenter["Spatial Road Segmenter (100m-200m)"]
+        Overpass["OpenStreetMap Overpass API (Lights, POIs)"]
+    end
+
+    subgraph Scoring ["Two-Dimensional Scoring & Confidence"]
+        Scorer["4-Pillar Safety Scoring Engine"]
+        Confidence["4-Pillar Data Confidence Engine"]
+        Diurnal["Continuous Diurnal Day/Night Decay"]
+    end
+
+    subgraph Services ["Core Protection Services"]
+        SafeStops["SafeStops Assistance Directory"]
+        Guardian["Live Journey Guardian & Token Engine"]
+        VoiceNLP["Multilingual Hinglish/Hindi NLP Engine"]
+        Intelligence["Institutional Safety Intelligence Service"]
+    end
+
+    subgraph Storage ["Persistence & AI Knowledge"]
+        DB[("SQLite Production Database (safewalk.db)")]
+        Gemini["Google Gemini AI & RAG Knowledge Base"]
+    end
+
+    UI --> Geo --> OSRM --> Segmenter
+    Segmenter --> Overpass
+    Overpass --> Scorer
+    Overpass --> Confidence
+    Diurnal --> Scorer
+    Scorer --> UI
+    Confidence --> UI
+    SafeStops --> UI
+    Guardian --> DB
+    VoiceNLP --> Gemini --> DB
+    Intelligence --> DB
+    PWA <--> DB
 ```
 
-### Step-by-Step Execution Flow:
-1. **High-Precision Geocoding & City Detection:**
-   `geocoder.geocode_address()` converts location inputs (e.g. *"Clock Tower"*, *"UPES Bidholi"*, *"Ballupur Chowk"*) to exact `(lat, lng)` coordinates using multi-stage local landmark tables and structured Nominatim searches.
-2. **OSRM Real Road Geometry Generation:**
-   `router.get_alternative_routes()` queries HTTPS OSRM endpoints (`https://router.project-osrm.org/route/v1/foot`) to fetch candidate walking paths containing up to 650+ pedestrian street points following actual roads and turns.
-3. **Multi-Factor Safety Scoring (0 - 100):**
-   `safety_scorer.calculate_safety_score()` evaluates coordinates along each route:
-   - **Time of Day Penalty:** Continuous time curve (up to -30 penalty at 02:00 AM).
-   - **Weighted Incidents:** Sum of active incident weights x severities near the route.
-   - **Streetlights:** +0 for lit streets, -20 for unlit streets.
-   - **POI Density:** High shop/amenity density adds up to +15 bonus.
-   - **Police Proximity:** Police stations within 800m add +10 bonus.
-   - Sorts routes so `routes[0]` is the **Safest Route** (Green) and `routes[-1]` is the **Fastest Route** (Red/Dashed).
-4. **Natural Language Reporting & Decay Flywheel:**
-   When a user reports an incident in plain text, `genai_layer.process_incident_report()` uses Gemini NLP to extract structured JSON. The incident is saved into SQLite (`safewalk.db`) and `report_manager.update_all_weights()` recalculates incident weights using the 48-hour half-life decay formula:
-   ```text
-   Weight = e^(-0.693 * hours_ago / 48) * Trust_Modifier * Verified_Bonus
-   ```
-5. **AI News & Open Data Ingestion:**
-   `news_incident_fetcher.py` queries Gemini AI with Search Grounding to fetch recent news reports, police advisories, and NCRB crime data for the active city, geocodes them, and ingests them into `safewalk.db`.
-6. **RAG-Grounded AI Safety Briefing:**
-   `rag_knowledge.py` retrieves matching WHO/NCRB guidelines and injects them alongside route scores and live report counts into `genai_layer.generate_safety_briefing()` to produce a 5-bullet safety briefing.
+### The 4-Pillar Explainable Route Scoring Algorithm
+Each road segment ($s$) is independently evaluated on a continuous scale ($0 - 100$):
+
+$$\text{Safety Score}(s) = w_l \cdot S_{\text{light}} + w_c \cdot S_{\text{commercial}} - P_{\text{diurnal}}(t) - \sum \text{DecayedIncidents}(s) + B_{\text{police}}$$
+
+Where:
+1. **$S_{\text{light}}$ (Streetlight Illumination, 25% weight):** Grounded in surveyed OpenStreetMap `lit=yes/no` tags and lamp-post density.
+2. **$S_{\text{commercial}}$ (Commercial Natural Footfall, 30% weight):** Number of active evening/night venues (chemists, 24/7 groceries, transit kiosks).
+3. **$P_{\text{diurnal}}(t)$ (Temporal Day/Night Penalty, 25% weight):** Continuous sinusoidal penalty peaking at 02:00 AM.
+4. **$\sum \text{DecayedIncidents}(s)$ (Dynamic Incident Weight, 20% weight):** Community and verified reports decayed via a 48-hour half-life exponential formula:
+   $$\text{Weight}(t) = e^{-\frac{0.693 \cdot \Delta t}{48}} \times \text{TrustModifier} \times \text{CorroborationBonus}$$
+
+![Architecture Diagram](docs/screenshots/graphic_02_architecture.png)
 
 ---
 
-## 📁 3. Project Directory Structure
+## 📸 3. User Interface & Feature Walkthrough
+
+### 1. Dual-Route Navigation & Explainable Segment Analysis
+Calculates the safest route alongside the shortest route, highlighting streetlight coverage, commercial vibrancy, and hazard points.
+![Dual Route Map](docs/screenshots/02_dual_route_map.png)
+
+---
+
+### 2. Segment-Level Deep-Dive & 4-Pillar Confidence Audit
+Users inspect individual 100m–200m road sections to understand the exact reasons behind the rating. Missing data is strictly distinguished from good conditions.
+![Route Planning Screen](docs/screenshots/01_route_planner.png)
+
+---
+
+### 3. SafeStops: Instant Nearby Assistance Directory
+Verified physical havens categorized into police stations, emergency trauma centers, campus security booths, and 24/7 pharmacies with 1-tap emergency rerouting.
+![SafeStops Screen](docs/screenshots/03_safestops.png)
+
+---
+
+### 4. Live Journey Guardian & Cryptographic Safety Tracking
+Zero-knowledge live journey sharing using 32-byte cryptographic tokens (SHA-256 hashed). Periodic "Are you okay?" check-ins automatically escalate if missed.
+![Live Journey Guardian](docs/screenshots/04_journey_guardian.png)
+
+![Guardian Security Flow](docs/screenshots/graphic_03_guardian_security.png)
+
+---
+
+### 5. Multilingual AI Voice Reporting & Offline PWA Sync
+Speak naturally in Hindi, English, or Romanized Hinglish (*"Bus stand ke paas light nahi jal rahi hai"*). The AI extracts structured JSON drafts for user review. Works offline with client-side idempotency keys.
+![Voice Reporting Screen](docs/screenshots/05_voice_reporting.png)
+
+---
+
+### 6. Institutional Safety Intelligence & Municipal Heatmaps
+Authorized campus security and municipal planners inspect infrastructure gaps (e.g. recurring broken streetlight clusters) using privacy-preserving 1.1km spatial cells.
+![Safety Intelligence Dashboard](docs/screenshots/06_safety_intelligence.png)
+
+---
+
+## 📂 4. Project Directory Structure
 
 ```text
 SafeWalk/
 │
-├── ai_backend/                       # AI & RAG Layer
-│   ├── genai_layer.py                # Gemini AI: Safety Briefings, Incident NLP, SOS SMS
-│   ├── news_incident_fetcher.py       # AI News Ingestion: Fetch news alerts & NCRB data
-│   └── rag_knowledge.py               # RAG Engine: WHO Guidelines + NCRB Insights vector store
+├── ai_backend/                                 # AI & RAG Intelligence Layer
+│   ├── genai_layer.py                         # Gemini AI: Safety briefings, NLP entity extraction, SOS SMS
+│   ├── news_incident_fetcher.py                # Live crime advisory & news ingestion with Search Grounding
+│   └── rag_knowledge.py                        # RAG Vector Store: WHO Guidelines & NCRB safety standards
 │
-├── backend/                          # Core Navigation & Database Engine
-│   ├── safewalk_service.py            # Master Unified Integration API
-│   ├── geocoder.py                    # High-Precision Multi-Stage Geocoder & Landmark Database
-│   ├── osm_safety_data.py             # Overpass API (Streetlights, POIs, Police, Alleys)
-│   ├── router.py                      # HTTPS OSRM Foot Router & Real Road Geometry Engine
-│   ├── safety_scorer.py               # Multi-factor Safety Scoring Engine (0-100)
-│   ├── report_manager.py              # Dynamic Weight Decay & Community Voting Engine
-│   ├── setup_db.py                    # SQLite Database Schema & Seed Data
-│   ├── cli_demo.py                    # Interactive Terminal CLI Application
-│   ├── test_integration.py            # End-to-End System Integration Test Suite
-│   ├── test_m2_backend.py             # Backend Core Unit Test Suite
-│   └── safewalk.db                    # SQLite Production Database
+├── backend/                                   # Core Geospatial & Business Logic
+│   ├── safewalk_service.py                     # Master unified API controller
+│   ├── route_segmenter.py                      # 100m-200m atomic road geometry segmentation
+│   ├── segment_analyzer.py                     # Segment-level multi-factor evidence evaluator
+│   ├── confidence_engine.py                    # 4-pillar data confidence & missing-data scoring
+│   ├── safestops_service.py                    # SafeStops assistance directory & dynamic rerouting
+│   ├── journey_guardian_service.py             # Cryptographic live tracking & escalation engine
+│   ├── trusted_contacts_service.py             # Emergency contact notification dispatcher
+│   ├── multilingual_voice_reporting.py         # Hinglish/Hindi NLP & voice incident processing
+│   ├── community_verification_moderation.py    # Dual-dimension community corroboration & voting
+│   ├── offline_sync_service.py                 # PWA offline queue & idempotent synchronization
+│   ├── safety_intelligence_service.py          # Institutional geospatial risk clustering & analytics
+│   ├── geocoder.py                             # High-precision multi-stage geocoder & landmark store
+│   ├── osm_safety_data.py                      # OpenStreetMap Overpass spatial queries
+│   ├── router.py                               # OSRM pedestrian routing integration
+│   ├── safety_scorer.py                        # Multi-factor route safety scorer
+│   ├── report_manager.py                       # Incident persistence & half-life exponential decay
+│   └── setup_db.py                             # Database schema initialization & seeding
 │
-├── frontend/                         # Streamlit Dashboard UI Layer
-│   ├── app.py                         # Streamlit Web App (Folium map, live feed, SOS, city search)
-│   ├── map_builder.py                 # Folium Map Builder (HeatMap, real road polylines, danger markers)
-│   └── requirements.txt               # Frontend Dependencies
+├── frontend/                                  # Web Application & UI Layer
+│   ├── app.py                                  # Streamlit multi-tab production application
+│   ├── map_builder.py                          # Folium geospatial builder with dual polylines
+│   ├── manifest.json                           # PWA web app manifest
+│   └── service-worker.js                       # PWA service worker for offline asset caching
 │
-├── .streamlit/                       # Streamlit Theme Configuration
-│   └── config.toml                    # Light theme tokens & typography settings
+├── docs/                                      # Documentation & Visual Assets
+│   └── screenshots/                            # High-resolution production UI captures & architecture
 │
-├── .env                              # Environment Variables (GEMINI_API_KEY)
-├── requirements.txt                  # Python Dependencies
-└── README.md                         # Project Documentation
+├── tests/                                     # Automated Test Suites
+│   ├── test_explainable_routing.py             # Unit tests for segmenting & explainability
+│   ├── test_safestops_guardian.py              # Unit tests for SafeStops & Journey Guardian
+│   ├── test_features_4_to_7.py                 # Unit tests for voice, offline sync & intelligence
+│   └── test_integration.py                     # End-to-end integration test suite
+│
+├── safewalk.db                                # SQLite production database
+├── requirements.txt                           # Python production dependencies
+└── README.md                                  # Comprehensive documentation
 ```
 
 ---
 
-## ⚡ 4. Setup & Deployment Guide
+## 🛠️ 5. Technology Stack
 
-### 1️⃣ Installation & Environment Setup
-Clone the repository and install the dependencies:
-
-```bash
-git clone https://github.com/vr11-ai/SafeWalk.git
-cd SafeWalk
-pip install -r requirements.txt
-```
-
-Set your **Gemini API Key** in `.env`:
-```ini
-GEMINI_API_KEY=your_gemini_api_key_here
-```
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend UI** | Streamlit, Folium, Streamlit-Folium, HTML5 Canvas, PWA Service Worker |
+| **Backend & Routing** | Python 3.10+, OSRM Pedestrian Routing Engine, OpenStreetMap Overpass API |
+| **Artificial Intelligence** | Google Gemini AI (NLP Entity Extraction & Multimodal Voice Interpretation) |
+| **Geospatial Processing** | Shapely, Geopy, Haversine Coordinate Formulas, Folium PolyLines |
+| **Security & Privacy** | SHA-256 Token Hashing, 32-Byte High-Entropy Secrets, 1.1km Generalized Spatial Cells |
+| **Database** | SQLite3 (WAL-Mode, Zero-Dependency Embedded Relational Engine) |
 
 ---
 
-### 2️⃣ Running with Docker (Recommended)
+## 🚀 6. Getting Started & Local Installation
 
-You can launch the entire stack using Docker Compose:
+### Prerequisites
+* Python 3.10 or higher
+* Git
 
-```bash
-docker compose up --build
-```
-The app will be accessible at `http://localhost:8501`.
+### Installation Steps
 
----
-
-### 3️⃣ Running the Streamlit Web Application Locally
-
-```bash
-streamlit run frontend/app.py
-```
-
----
-
-### 3️⃣ Streamlit Community Cloud Deployment (100% Free)
-
-SafeWalk is pre-configured for instant 1-click deployment on **Streamlit Community Cloud**:
-
-1. Go to **[share.streamlit.io](https://share.streamlit.io)** and log in with your GitHub account.
-2. Click **New app** → Select repository `vr11-ai/SafeWalk` (branch `main`).
-3. Set **Main file path** to `frontend/app.py`.
-4. Under **Advanced settings...** → **Secrets**, add:
-   ```toml
-   GEMINI_API_KEY = "your_actual_gemini_api_key_here"
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/PrincePundir123/RAAHSAATHI.git
+   cd RAAHSAATHI
    ```
-5. Click **Deploy!**
+
+2. **Create and activate a virtual environment:**
+   ```bash
+   python -m venv venv
+   # On Windows:
+   venv\Scripts\activate
+   # On macOS/Linux:
+   source venv/bin/activate
+   ```
+
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Configure Environment Variables:**
+   Create a `.env` file in the root directory:
+   ```ini
+   GEMINI_API_KEY="your-gemini-api-key"
+   DEBUG=False
+   ```
+
+5. **Initialize the Database:**
+   ```bash
+   python backend/setup_db.py
+   ```
+
+6. **Run the Application:**
+   ```bash
+   python -m streamlit run frontend/app.py
+   ```
+   Open your browser and navigate to `http://localhost:8501`.
 
 ---
 
-### 4️⃣ Running the Interactive Terminal Application (CLI)
+## 🧪 7. Automated Test Suite
 
-To test all SafeWalk features interactively in your terminal:
+SafeWalk includes comprehensive unit and integration test coverage across all features:
 
 ```bash
-python backend/cli_demo.py
+# Run all unit and integration tests
+python -m unittest discover tests/
 ```
 
----
-
-### 5️⃣ Running Test Suites
-
-#### Run Segment Intelligence & Confidence Tests:
-```bash
-python tests/test_segment_intelligence_unit.py
-```
-
-#### Run SafeStops & Journey Guardian Tests:
-```bash
-python tests/test_safestops_guardian_unit.py
-```
-
-#### Run Voice Reporting, Moderation, PWA & Intelligence Tests:
-```bash
-python tests/test_features_4_5_6_7_unit.py
-```
-
-#### Run Backend Integration Tests:
-```bash
-python backend/test_integration.py
-```
+Test coverage includes:
+* **Route Segmenter:** Validation of continuous road polyline subdivision (100m–200m lengths).
+* **Confidence Engine:** Verification that zero reports results in low confidence, not falsely high safety.
+* **Journey Guardian:** Verification of 32-byte cryptographic token hashing and escalation trigger thresholds.
+* **Offline Sync:** Validation of client-generated idempotency keys to ensure zero duplicate database insertions.
 
 ---
 
-## 🔍 5. Explainable, Segment-Level Route Intelligence
+## 🔒 8. Security, Ethics & Privacy Principles
 
-SafeWalk v2.0 introduces **Segment-Level Route Intelligence** — dividing walking routes into real ~100–200m road segments and explaining the exact evidence behind every section:
-
-### 1. Transparent Scoring Engine
-- **Qualitative Risk Labels**:
-  - 🟢 `Lower reported-risk indicators` (Score $\ge 75$)
-  - 🟡 `Mixed safety indicators` (Score $50 - 74$)
-  - 🔴 `Elevated reported-risk indicators` (Score $< 50$)
-  - ⚪ `Insufficient data` (Unverified / missing data)
-- Evaluates:
-  - **Street Lighting**: OpenStreetMap survey tags (`highway=street_lamp`, `lit=yes/no`)
-  - **Commercial Presence**: Mapped shops and public venues offering natural surveillance (distinguishing mapped venues from verified operating hours)
-  - **Community Reports**: Decayed reports ($e^{-0.693 \cdot \Delta t / 48}$) with proximity falloff and provenance IDs
-  - **Emergency Assistance**: Distance to mapped police stations and hospitals
-  - **Diurnal Curve**: Continuous sinusoidal time penalty up to $-30$ points at 02:00 AM
-
-### 2. Independent 4-Pillar Data-Confidence Engine
-Confidence is strictly separated from safety:
-1. **Completeness (40%)**: Coverage across lighting, POIs, incidents, and emergency services.
-2. **Freshness (25%)**: Timestamp recency of spatial queries and community reports.
-3. **Source Provenance (20%)**: Distinguishes public GIS registries, corroborated reports, and single unverified submissions.
-4. **Corroboration (15%)**: Cross-verification across independent indicators.
-
-Classified into: `High confidence`, `Medium confidence`, `Low confidence`, and `Insufficient data`.
+1. **Zero Location History Profiling:** Users do not need an account to navigate. Journey Guardian links expire automatically after trip completion.
+2. **Cryptographic Token Protection:** Journey Guardian URLs share an opaque 32-byte token. Database integer IDs are never exposed in URLs or network payloads.
+3. **Data Provenance Integrity:** Open datasets (`PUBLIC FACILITY`) are strictly separated from verified institutional partners (`PARTNER-VERIFIED`). SafeWalk never infers official endorsement from community upvotes.
+4. **Aggregated Municipal Privacy:** Institutional intelligence heatmaps enforce minimum incident thresholds and 1.1km generalized spatial grid cells, preventing de-anonymization of individual travel habits.
 
 ---
 
-## 🛡️ 6. SafeStops & Live Journey Guardian
-
-### SafeStops (Nearby Verified Assistance)
-- Identifies nearby police stations, hospitals, campus security desks (UPES Bidholi & Kandoli), and 24/7 pharmacies.
-- Distinguishes `PUBLIC FACILITY` from audited `PARTNER-VERIFIED` safe havens.
-- **One-Click Emergency Rerouting**: Tap *"Navigate to Nearest Help"* to instantly calculate the safest walking route.
-
-### Live Journey Guardian (Real-Time Sharing & Escalation)
-- **State Machine**: `JOURNEY_STARTED` ➔ `CHECK_IN_PENDING` ➔ `CHECK_IN_CONFIRMED` ➔ `MISSED_CHECK_IN` ➔ `CONTACT_ALERTED` ➔ `ASSISTANCE_ACKNOWLEDGED` ➔ `JOURNEY_COMPLETED`.
-- **Cryptographic Sharing**: High-entropy tokens (`secrets.token_urlsafe`) stored as SHA-256 hashes.
-- **Server-Side Escalation Job**: Evaluates missed check-in deadlines + grace periods server-side and automatically notifies trusted contacts.
-- **Contact Acknowledgment**: Allows contacts to select *"I am responding"*, notifying the user in real time.
-
----
-
-## 🎙️ 7. Multilingual Voice Reporting, Moderation & Safety Intelligence
-
-### Voice & Multilingual Reporting (Feature 4 & 6)
-- Supports Hindi (Devanagari), English, and **Hinglish** (Romanized Hindi).
-- Generates editable AI incident drafts requiring explicit user confirmation before publication.
-- **PWA & Offline Queue**: Unsent reports are stored with idempotency keys (`client_submission_id`) and synchronize automatically when connectivity is restored.
-
-### Trustworthy Moderation (Feature 5)
-- Dual-dimension status: Moderation status (`PUBLISHED`, `PENDING_REVIEW`, `HIDDEN`) vs Evidence status (`UNVERIFIED`, `COMMUNITY_CORROBORATED`, `OFFICIALLY_SOURCED`).
-- Enforces 1 vote per authenticated account. Community votes can corroborate reports (3+ votes), but never award official government verification badges.
-
-### Safety Intelligence Dashboard (Feature 7)
-- Aggregated decision-support metrics for campus authorities and municipal moderators.
-- Measures lighting/infrastructure outages and maps privacy-preserving 1.1km risk clusters.
-
----
-
-## 🏆 8. Key Differentiators & Judge Talking Points
-
-| Feature | Competitors (Google Maps, Waze) | SafeWalk v2.0 |
-| :--- | :--- | :--- |
-| **Route Optimization** | Purely fastest time ($m/min$) | Dual Routes: **Safest** (0-100) vs **Fastest** |
-| **Route Geometry** | Basic line path | **100% Real Pedestrian Road Geometry (OSRM)** |
-| **Spatial Precision** | Standard city search | **110-Meter Fine-Grained Grid Caching** |
-| **Geocoding Accuracy** | Standard address lookup | **Multi-Stage Landmark Table & Precision Bounds** |
-| **Incident Decay** | Static or binary flags | Exponential decay curve (48h half-life) |
-| **Reporting Interface** | Multi-step manual forms | Natural Language text (English/Hindi) via Gemini NLP |
-| **AI News Ingestion** | None | Real-time news alerts & NCRB crime ingestion |
-| **AI Safety Guidance** | None | 5-bullet briefing grounded in WHO/NCRB RAG context |
-| **Community Trust** | Unverified user reports | 3+ upvote verification badge & 1.3x weight boost |
-| **Global Scale** | Limited to partnered cities | Global support for any city via OpenStreetMap & Nominatim |
-
----
-
-## 🚀 6. Future Roadmap & Strategic Vision
-
-- **Dedicated HTML5 / CSS3 / JavaScript Custom Frontend**: Future migration to a standalone custom web stack SPA with interactive Leaflet map rendering and mobile PWA support.
-- **IoT Smartwatch & Wearable Panic Integration**: One-touch panic trigger on Apple Watch / WearOS for instant emergency location broadcasts.
-- **Real-Time Voice Navigation**: Spoken turn-by-turn guidance focusing on well-lit main arterial roads and nearby commercial nodes.
-- **24/7 Verified Safe Haven Partner Network**: Partnering with verified pharmacies, 24/7 convenience stores, and police booths as designated emergency walk-in shelters.
-
----
-
-## 👥 7. Team Credits & Roles
-
-SafeWalk v2.0 was designed and developed by **Team SafeWalk** (UPES Dehradun, 2026):
-
-- **Vidit Raturi** — **Team Lead**  
-  *Full-Stack System Integration, End-to-End Feature Development, OWASP Security Hardening, Dynamic Decay Weight Engine, High-Precision Multi-Stage Geocoding, and Bug Resolution.*
-- **Vanshika** — **Frontend Lead**  
-  *Streamlit Dashboard UI/UX, Folium Map Component Architecture, Live Incident Feed Components, and SOS Interface.*
-- **Ritika** — **Backend Foundation Lead**  
-  *SQLite Database Schema Architecture, Initial OSRM & Overpass API Routing Foundation, and Core Safety Scoring Base.*
-
----
-
-## 📜 8. License & Credits
-
-Built with ❤️ by **Team SafeWalk** (UPES Dehradun, 2026).  
-Powered by **Google Gemini AI**, **OpenStreetMap**, **OSRM**, **ReportLab**, and **Streamlit**.
+## 📄 License
+This project is licensed under the MIT License — see the LICENSE file for details.

@@ -1,5 +1,6 @@
 import sys
 import os
+import uuid
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BACKEND_DIR = os.path.join(BASE_DIR, "backend")
@@ -39,8 +40,9 @@ def test_structured_incident_extraction_draft():
 
 
 def test_community_verification_and_moderation():
-    # Test vote casting
-    vote_res = cast_community_vote(incident_id=1, user_id="user_test_verif_1", vote_type="up")
+    # Use dynamic user id to ensure test idempotency across repeated test runs
+    test_user = f"user_test_{uuid.uuid4().hex[:8]}"
+    vote_res = cast_community_vote(incident_id=1, user_id=test_user, vote_type="up")
     assert vote_res["success"] is True
     assert "evidence_status" in vote_res
 
@@ -57,7 +59,7 @@ def test_community_verification_and_moderation():
 
 
 def test_offline_queue_and_idempotent_sync():
-    sub_id = "test_sub_key_12345"
+    sub_id = f"test_sub_key_{uuid.uuid4().hex[:8]}"
     # 1. Queue offline
     q_res = queue_offline_report(
         user_id="user_offline_tester",
