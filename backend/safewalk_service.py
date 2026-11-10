@@ -108,6 +108,9 @@ def plan_safe_route(start_location: str, end_location: str, hour: int = 22, fall
 
     recent_feed = get_recent_reports_in_city(city, limit=10)
 
+    # Extract explainable segment intelligence from the safest route
+    seg_intel = safest_route.get("segment_intelligence")
+
     return {
         "success": True,
         "city": city,
@@ -118,6 +121,7 @@ def plan_safe_route(start_location: str, end_location: str, hour: int = 22, fall
             "safest": safest_route,
             "fastest": fastest_route,
         },
+        "segment_intelligence": seg_intel,
         "city_stats": city_stats,
         "ai_safety_briefing": briefing,
         "recent_reports": recent_feed,
