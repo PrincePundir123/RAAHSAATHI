@@ -24,8 +24,5 @@ COPY . .
 # Expose Streamlit default port
 EXPOSE 8501
 
-# Healthcheck to monitor container status
-HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health || exit 1
-
-# Launch the Streamlit frontend
-ENTRYPOINT ["streamlit", "run", "frontend/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# Launch the Streamlit frontend with dynamic $PORT support for Render/Cloud platforms
+CMD sh -c "streamlit run frontend/app.py --server.port=${PORT:-8501} --server.address=0.0.0.0 --server.headless=true"
