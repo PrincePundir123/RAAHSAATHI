@@ -1,9 +1,11 @@
 # router.py - OSRM Foot Routing Engine (Dense Real Street Sampling)
 import requests
 import math
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from safety_scorer import calculate_safety_score
 from report_manager import get_weighted_incidents_near, update_all_weights
+from route_segmenter import segment_route_geometry
+from segment_analyzer import analyze_entire_route
 
 OSRM_SERVERS = [
     "https://router.project-osrm.org/route/v1/foot",
@@ -78,12 +80,23 @@ def get_alternative_routes(s_lat: float, s_lng: float, e_lat: float, e_lng: floa
                     duration_min = max(1, round(duration_sec / 60))
 
                     eval_data = _evaluate_route_safety(points, hour)
+
+                    # Compute Segment-Level Intelligence using real OSRM steps
+                    route_segments = segment_route_geometry(
+                        raw_osrm_route=r,
+                        fallback_points=points,
+                        target_segment_length_m=150.0
+                    )
+                    segment_analysis = analyze_entire_route(route_segments, hour=hour)
+
                     parsed_routes.append({
                         "points": points,
                         "duration_min": duration_min,
                         "distance_m": round(distance_m),
-                        "safety_avg": eval_data["safety_avg"],
-                        "danger_zones": eval_data["danger_zones"]
+                        "safety_avg": segment_analysis.get("overall_score", eval_data["safety_avg"]),
+                        "danger_zones": eval_data["danger_zones"],
+                        "segment_intelligence": segment_analysis,
+                        "raw_osrm": r
                     })
                 if parsed_routes:
                     break
@@ -98,7 +111,8 @@ def get_alternative_routes(s_lat: float, s_lng: float, e_lat: float, e_lng: floa
             "duration_min": real_route["duration_min"],
             "distance_m": real_route["distance_m"],
             "safety_avg": max(0, real_route["safety_avg"] - 5),
-            "danger_zones": list(real_route["danger_zones"])
+            "danger_zones": list(real_route["danger_zones"]),
+            "segment_intelligence": real_route.get("segment_intelligence")
         })
 
     if len(parsed_routes) == 0:
@@ -114,19 +128,24 @@ def get_alternative_routes(s_lat: float, s_lng: float, e_lat: float, e_lng: floa
             pts.append([round(lat, 6), round(lng, 6)])
             
         eval_data = _evaluate_route_safety(pts, hour)
+        fallback_segs = segment_route_geometry(fallback_points=pts, target_segment_length_m=150.0)
+        seg_intel = analyze_entire_route(fallback_segs, hour=hour)
+
         parsed_routes.append({
             "points": pts,
             "duration_min": base_dur,
             "distance_m": round(dist_approx_km * 1000),
-            "safety_avg": eval_data["safety_avg"],
-            "danger_zones": eval_data["danger_zones"]
+            "safety_avg": seg_intel.get("overall_score", eval_data["safety_avg"]),
+            "danger_zones": eval_data["danger_zones"],
+            "segment_intelligence": seg_intel
         })
         parsed_routes.append({
             "points": pts,
             "duration_min": base_dur + 2,
             "distance_m": round(dist_approx_km * 1100),
-            "safety_avg": eval_data["safety_avg"],
-            "danger_zones": eval_data["danger_zones"]
+            "safety_avg": max(0, seg_intel.get("overall_score", eval_data["safety_avg"]) - 5),
+            "danger_zones": eval_data["danger_zones"],
+            "segment_intelligence": seg_intel
         })
 
     safe_route = max(parsed_routes, key=lambda r: (r["safety_avg"], -r["duration_min"]))

@@ -14,6 +14,7 @@ DB_PATH = os.path.join(BASE_DIR, "safewalk.db")
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 _OSM_SEGMENT_CACHE: Dict[Tuple[float, float], Dict[str, Any]] = {}
+_OVERPASS_DISABLED = False
 
 
 def _calculate_time_penalty(hour: int) -> int:
@@ -29,13 +30,14 @@ def _fetch_segment_osm_evidence(lat: float, lng: float) -> Dict[str, Any]:
     Fetches raw OpenStreetMap indicators for a segment with explicit provenance.
     Never fabricates data. Returns unknown when an endpoint fails or has no mapped tags.
     """
-    cache_key = (round(lat, 3), round(lng, 3))
+    global _OVERPASS_DISABLED
+    cache_key = (round(lat, 2), round(lng, 2))
     if cache_key in _OSM_SEGMENT_CACHE:
         return _OSM_SEGMENT_CACHE[cache_key]
 
     now_iso = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Default fallback: explicit UNKNOWN states (not fake positives)
+    # Default fallback: explicit UNKNOWN states (never fabricate fake positives)
     osm_evidence = {
         "lighting": {
             "status": "unknown",  # "present", "absent", "unknown"
@@ -74,8 +76,12 @@ def _fetch_segment_osm_evidence(lat: float, lng: float) -> Dict[str, Any]:
         }
     }
 
+    if _OVERPASS_DISABLED:
+        _OSM_SEGMENT_CACHE[cache_key] = osm_evidence
+        return osm_evidence
+
     query = f"""
-    [out:json][timeout:2];
+    [out:json][timeout:1];
     (
       node["highway"="street_lamp"](around:120, {lat}, {lng});
       way["lit"="yes"](around:120, {lat}, {lng});
@@ -94,8 +100,8 @@ def _fetch_segment_osm_evidence(lat: float, lng: float) -> Dict[str, Any]:
         resp = requests.post(
             OVERPASS_URL,
             data={"data": query},
-            headers={"User-Agent": "SafeWalk-Route-Intelligence/2.0"},
-            timeout=1.2
+            headers={"User-Agent": "SafeWalk-App/2.0"},
+            timeout=0.35
         )
         if resp.status_code == 200:
             elements = resp.json().get("elements", [])
@@ -199,7 +205,10 @@ def _fetch_segment_osm_evidence(lat: float, lng: float) -> Dict[str, Any]:
 
             osm_evidence["road"]["dark_alley"] = has_alley
 
+        else:
+            _OVERPASS_DISABLED = True
     except Exception:
+        _OVERPASS_DISABLED = True
         # Graceful fallback: preserve explicit UNKNOWN status
         pass
 
