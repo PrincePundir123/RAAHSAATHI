@@ -1,0 +1,14 @@
+{
+  "durations": {
+    "scene_01": 44.76,
+    "scene_02": 37.06,
+    "scene_03": 37.99,
+    "scene_04": 40.63,
+    "scene_05": 36.48,
+    "scene_06": 26.57,
+    "scene_07": 36.72,
+    "scene_08": 36.82
+  },
+  "total_seconds": 297.03,
+  "voice": "en-IN-PrabhatNeural"
+}

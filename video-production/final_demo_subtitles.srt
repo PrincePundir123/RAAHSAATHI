@@ -1,119 +1,179 @@
 1
-00:00:00,000 --> 00:00:07,886
+00:00:00,000 --> 00:00:06,394
 Hello everyone
 
 2
-00:00:07,886 --> 00:00:15,772
-I am Prince Pundir, and today I am excited to present SafeWalk RaahSaathi, an autonomous, AI-grounded women's safety navigation platform
+00:00:06,394 --> 00:00:12,789
+I am Prince Pundir, and welcome to the presentation of SafeWalk RaahSaathi, an autonomous, AI-grounded women's safety navigation platform
 
 3
-00:00:15,772 --> 00:00:23,658
-Every day, millions of women commute home from universities and workplaces
+00:00:12,789 --> 00:00:19,183
+Every evening, millions of women commute home from universities, corporate offices, and transit hubs
 
 4
-00:00:23,658 --> 00:00:31,544
-Mainstream navigation apps optimize purely for speed, often routing women through dark, unmonitored alleys just to save ninety seconds
+00:00:19,183 --> 00:00:25,577
+When they open standard navigation apps, every major service optimizes for one single dimension: speed
 
 5
-00:00:31,544 --> 00:00:39,430
-SafeWalk redefines navigation by prioritizing human safety over transit time, combining real road geometry, verified assistance havens, and explainable spatial intelligence
+00:00:25,577 --> 00:00:31,971
+Distance divided by time
 
 6
-00:00:39,430 --> 00:00:46,458
-Let us see it in action
+00:00:31,971 --> 00:00:38,366
+They will gladly route a woman walking alone late at night through an unlit underpass or an isolated alley just to save ninety seconds
 
 7
-00:00:46,458 --> 00:00:53,487
-Starting our journey in Dehradun at 10:00 PM, notice our dual routing: the red dashed line is the shortest path, cutting through high-risk stretches
+00:00:38,366 --> 00:00:44,760
+SafeWalk redefines navigation by prioritizing human safety, combining verified road geometry, assistance havens, and explainable spatial intelligence
 
 8
-00:00:53,487 --> 00:01:00,515
-The emerald line is our Safest Route
+00:00:44,760 --> 00:00:52,172
+Before seeing the live app, look under the hood
 
 9
-00:01:00,515 --> 00:01:07,543
-SafeWalk introduces Explainable Segment-Level Route Intelligence, dividing the walking path into 100 to 200 meter sections
+00:00:52,172 --> 00:00:59,584
+Conventional safety apps rely on subjective user ratings
 
 10
-00:01:07,543 --> 00:01:14,572
-For each segment, our engine reveals exact evidence: commercial footfall, street lighting, and diurnal time penalties
+00:00:59,584 --> 00:01:06,996
+SafeWalk introduces a deterministic four-pillar route scoring engine
 
 11
-00:01:14,572 --> 00:01:21,600
-Most importantly, we distinguish safety from data confidence so unmonitored roads are never falsely marked safe
+00:01:06,996 --> 00:01:14,408
+We compute verified streetlight illumination from OpenStreetMap surveys, natural commercial footfall from active late-night storefronts and chemists, a continuous diurnal temporal penalty for night journeys, and community-verified incident reports
 
 12
-00:01:21,600 --> 00:01:30,635
-When a user feels uncomfortable or followed, she opens SafeStops
+00:01:14,408 --> 00:01:21,820
+Furthermore, our spatial segmenter slices walking routes into 100 to 200 meter atomic sections, providing full audit transparency rather than a single black-box score
 
 13
-00:01:30,635 --> 00:01:39,670
-SafeStops indexes vetted assistance havens: 24/7 police stations, campus security desks, emergency hospitals, and verified late-night pharmacies
+00:01:21,820 --> 00:01:28,152
+Here is SafeWalk in action
 
 14
-00:01:39,670 --> 00:01:48,705
-We enforce strict data provenance, distinguishing open public facilities from partner-verified institutional desks
+00:01:28,152 --> 00:01:34,483
+When planning a walk in Dehradun at 10 PM, our dual-route engine renders two paths: the coral dashed line is the shortest path, but it traverses dangerous low-lit stretches
 
 15
-00:01:48,705 --> 00:01:57,740
-With one tap on Navigate to Nearest Help Point, SafeWalk calculates the safest walking path directly to the closest safe haven with instant contact options
+00:01:34,483 --> 00:01:40,815
+The emerald line is our Safest Route
 
 16
-00:01:57,740 --> 00:02:04,892
-For lone journeys, users activate Live Journey Guardian: a privacy-first tracking and automated check-in engine
+00:01:40,815 --> 00:01:47,147
+Notice the Segment-Level Deep Dive card: each segment explains its score in plain language, such as eight commercial storefronts offsetting missing streetlights
 
 17
-00:02:04,892 --> 00:02:12,044
-Users set a check-in interval with a grace period
+00:01:47,147 --> 00:01:53,478
+Most importantly, we strictly separate safety score from data confidence
 
 18
-00:02:12,044 --> 00:02:19,196
-SafeWalk issues a high-entropy 32-byte cryptographic sharing token, never exposing database IDs
+00:01:53,478 --> 00:01:59,810
+A road with zero reports is never falsely labeled safe: it is marked as low confidence until verified
 
 19
-00:02:19,196 --> 00:02:26,348
-During the trip, periodic check-ins confirm user safety
+00:01:59,810 --> 00:02:06,582
+What happens if a woman feels uncomfortable, followed, or in distress during her commute
 
 20
-00:02:26,348 --> 00:02:33,500
-If a check-in is missed or emergency assistance is triggered, our server immediately dispatches simulated alerts to trusted contacts, who can acknowledge that help is on the way
+00:02:06,582 --> 00:02:13,353
+She does not have time to browse web directories
 
 21
-00:02:33,500 --> 00:02:41,312
-SafeWalk also features Multilingual AI Voice Reporting
+00:02:13,353 --> 00:02:20,125
+She opens SafeStops
 
 22
-00:02:41,312 --> 00:02:49,125
-Users can speak naturally in Hindi, English, or Hinglish
+00:02:20,125 --> 00:02:26,897
+SafeStops indexes vetted assistance havens: 24/7 police stations, campus security desks, emergency trauma centers, and verified pharmacies
 
 23
-00:02:49,125 --> 00:02:56,938
-Our NLP engine detects Romanized Hinglish, preserves spoken transcripts, and drafts structured reports for user confirmation
+00:02:26,897 --> 00:02:33,668
+We enforce strict data provenance: public datasets are marked Public Facility, while university security booths are labeled Partner-Verified
 
 24
-00:02:56,938 --> 00:03:04,750
-And in low-connectivity areas, SafeWalk works offline as a PWA, queueing incident reports locally with cryptographic idempotency keys that sync automatically once back online
+00:02:33,668 --> 00:02:40,440
+With one single tap on Navigate to Nearest Help Point, SafeWalk calculates the safest walking path directly to the closest safe haven with instant phone links
 
 25
-00:03:04,750 --> 00:03:13,663
-For campus administrations and municipal authorities, SafeWalk provides an interactive Safety Intelligence Dashboard
+00:02:40,440 --> 00:02:47,736
+For lone journeys, users activate Live Journey Guardian
 
 26
-00:03:13,663 --> 00:03:22,577
-All metrics are computed directly from live database records
+00:02:47,736 --> 00:02:55,032
+Designed with privacy by default, the user gives explicit consent and chooses her check-in interval, for example every five minutes with a two-minute grace period
 
 27
-00:03:22,577 --> 00:03:31,490
-Authorities can monitor infrastructure gaps like streetlight outages and examine privacy-preserving geospatial risk clusters to plan preventive safety audits without compromising individual travel histories
+00:02:55,032 --> 00:03:02,328
+SafeWalk issues a high-entropy 32-byte cryptographic sharing token, storing hashes using SHA-256 and never exposing database IDs
 
 28
-00:03:31,490 --> 00:03:41,667
-Under the hood, SafeWalk is built on Python, Streamlit, Folium, and SQLite, powered by OSRM pedestrian routing, OpenStreetMap Overpass spatial queries, and Google Gemini AI grounded in safety standards
+00:03:02,328 --> 00:03:09,624
+Periodic prompts confirm user safety
 
 29
-00:03:41,667 --> 00:03:51,843
-With over 35 structured commits and comprehensive tests, SafeWalk RaahSaathi ensures women don't just reach their destination faster, but safer
+00:03:09,624 --> 00:03:16,920
+If a check-in is missed, our server triggers simulated alerts with GPS coordinates to trusted contacts, who can tap I am responding to confirm help is underway
 
 30
-00:03:51,843 --> 00:04:02,020
+00:03:16,920 --> 00:03:23,562
+On the Live Guardian dashboard, you can see the active session in real-time
+
+31
+00:03:23,562 --> 00:03:30,205
+The user sees the remaining grace period, battery-efficient tracking, and emergency panic buttons
+
+32
+00:03:30,205 --> 00:03:36,847
+In our simulated contact viewer, trusted family members and campus security can monitor the journey securely without creating user accounts
+
+33
+00:03:36,847 --> 00:03:43,490
+The moment an alert is acknowledged, the user interface updates with an empathetic confirmation badge
+
+34
+00:03:43,490 --> 00:03:50,834
+Filling out forms in the dark is frustrating and slow
+
+35
+00:03:50,834 --> 00:03:58,178
+SafeWalk supports Multilingual AI Voice Reporting
+
+36
+00:03:58,178 --> 00:04:05,522
+Users speak naturally in Hindi, English, or Hinglish: for example, Bus stand ke paas light nahi jal rahi hai aur raat mein bahut andhera rehta hai
+
+37
+00:04:05,522 --> 00:04:12,866
+Our NLP engine classifies the incident category, extracts a normalized draft, and requires user confirmation before saving
+
+38
+00:04:12,866 --> 00:04:20,210
+Even in basement parking or low-signal zones, our PWA offline queue stores reports locally with cryptographic idempotency keys, syncing seamlessly once online
+
+39
+00:04:20,210 --> 00:04:25,470
+Finally, SafeWalk empowers campus administrations and municipal authorities through our Safety Intelligence Dashboard
+
+40
+00:04:25,470 --> 00:04:30,730
+All statistics are computed live from active database records
+
+41
+00:04:30,730 --> 00:04:35,990
+Authorities can monitor infrastructure gaps like recurring streetlight outages and examine privacy-preserving 1
+
+42
+00:04:35,990 --> 00:04:41,250
+1-kilometer spatial clusters without compromising individual travel histories
+
+43
+00:04:41,250 --> 00:04:46,510
+SafeWalk RaahSaathi bridges the gap between raw maps and genuine peace of mind
+
+44
+00:04:46,510 --> 00:04:51,770
+Every woman deserves the safest journey home
+
+45
+00:04:51,770 --> 00:04:57,030
 Once again, I am Prince Pundir, and thank you for watching

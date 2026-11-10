@@ -1,58 +1,74 @@
 [
   {
     "scene_id": "scene_01",
-    "title": "Introduction & The Core Problem",
+    "title": "Introduction & The Navigation Dilemma",
+    "tag": "THE BLINDSPOT OF MODERN NAVIGATION",
     "start_time": 0.0,
-    "end_time": 39.43,
-    "duration": 39.43,
-    "text": "Hello everyone! I am Prince Pundir, and today I am excited to present SafeWalk RaahSaathi, an autonomous, AI-grounded women's safety navigation platform. Every day, millions of women commute home from universities and workplaces. Mainstream navigation apps optimize purely for speed, often routing women through dark, unmonitored alleys just to save ninety seconds. SafeWalk redefines navigation by prioritizing human safety over transit time, combining real road geometry, verified assistance havens, and explainable spatial intelligence."
+    "end_time": 44.76,
+    "duration": 44.76,
+    "text": "Hello everyone! I am Prince Pundir, and welcome to the presentation of SafeWalk RaahSaathi, an autonomous, AI-grounded women's safety navigation platform. Every evening, millions of women commute home from universities, corporate offices, and transit hubs. When they open standard navigation apps, every major service optimizes for one single dimension: speed. Distance divided by time. They will gladly route a woman walking alone late at night through an unlit underpass or an isolated alley just to save ninety seconds. SafeWalk redefines navigation by prioritizing human safety, combining verified road geometry, assistance havens, and explainable spatial intelligence."
   },
   {
     "scene_id": "scene_02",
-    "title": "Dual-Route Planning & Segment Intelligence",
-    "start_time": 39.43,
-    "end_time": 81.6,
-    "duration": 42.17,
-    "text": "Let us see it in action. Starting our journey in Dehradun at 10:00 PM, notice our dual routing: the red dashed line is the shortest path, cutting through high-risk stretches. The emerald line is our Safest Route. SafeWalk introduces Explainable Segment-Level Route Intelligence, dividing the walking path into 100 to 200 meter sections. For each segment, our engine reveals exact evidence: commercial footfall, street lighting, and diurnal time penalties. Most importantly, we distinguish safety from data confidence so unmonitored roads are never falsely marked safe."
+    "title": "4-Pillar Scoring Architecture",
+    "tag": "EXPLAINABLE INTELLIGENCE BLUEPRINT",
+    "start_time": 44.76,
+    "end_time": 81.82,
+    "duration": 37.06,
+    "text": "Before seeing the live app, look under the hood. Conventional safety apps rely on subjective user ratings. SafeWalk introduces a deterministic four-pillar route scoring engine. We compute verified streetlight illumination from OpenStreetMap surveys, natural commercial footfall from active late-night storefronts and chemists, a continuous diurnal temporal penalty for night journeys, and community-verified incident reports. Furthermore, our spatial segmenter slices walking routes into 100 to 200 meter atomic sections, providing full audit transparency rather than a single black-box score."
   },
   {
     "scene_id": "scene_03",
-    "title": "SafeStops Nearby Assistance",
-    "start_time": 81.6,
-    "end_time": 117.74,
-    "duration": 36.14,
-    "text": "When a user feels uncomfortable or followed, she opens SafeStops. SafeStops indexes vetted assistance havens: 24/7 police stations, campus security desks, emergency hospitals, and verified late-night pharmacies. We enforce strict data provenance, distinguishing open public facilities from partner-verified institutional desks. With one tap on Navigate to Nearest Help Point, SafeWalk calculates the safest walking path directly to the closest safe haven with instant contact options."
+    "title": "Live Dual-Route Navigation & Segment Deep-Dive",
+    "tag": "REAL-TIME SEGMENT AUDIT",
+    "start_time": 81.82,
+    "end_time": 119.81,
+    "duration": 37.99,
+    "text": "Here is SafeWalk in action. When planning a walk in Dehradun at 10 PM, our dual-route engine renders two paths: the coral dashed line is the shortest path, but it traverses dangerous low-lit stretches. The emerald line is our Safest Route. Notice the Segment-Level Deep Dive card: each segment explains its score in plain language, such as eight commercial storefronts offsetting missing streetlights. Most importantly, we strictly separate safety score from data confidence. A road with zero reports is never falsely labeled safe: it is marked as low confidence until verified."
   },
   {
     "scene_id": "scene_04",
-    "title": "Live Journey Guardian",
-    "start_time": 117.74,
-    "end_time": 153.5,
-    "duration": 35.76,
-    "text": "For lone journeys, users activate Live Journey Guardian: a privacy-first tracking and automated check-in engine. Users set a check-in interval with a grace period. SafeWalk issues a high-entropy 32-byte cryptographic sharing token, never exposing database IDs. During the trip, periodic check-ins confirm user safety. If a check-in is missed or emergency assistance is triggered, our server immediately dispatches simulated alerts to trusted contacts, who can acknowledge that help is on the way."
+    "title": "SafeStops Verified Assistance Havens",
+    "tag": "EMERGENCY SAFE HAVENS",
+    "start_time": 119.81,
+    "end_time": 160.44,
+    "duration": 40.63,
+    "text": "What happens if a woman feels uncomfortable, followed, or in distress during her commute? She does not have time to browse web directories. She opens SafeStops. SafeStops indexes vetted assistance havens: 24/7 police stations, campus security desks, emergency trauma centers, and verified pharmacies. We enforce strict data provenance: public datasets are marked Public Facility, while university security booths are labeled Partner-Verified. With one single tap on Navigate to Nearest Help Point, SafeWalk calculates the safest walking path directly to the closest safe haven with instant phone links."
   },
   {
     "scene_id": "scene_05",
-    "title": "Multilingual AI Voice Reporting & Offline PWA",
-    "start_time": 153.5,
-    "end_time": 184.75,
-    "duration": 31.25,
-    "text": "SafeWalk also features Multilingual AI Voice Reporting. Users can speak naturally in Hindi, English, or Hinglish. Our NLP engine detects Romanized Hinglish, preserves spoken transcripts, and drafts structured reports for user confirmation. And in low-connectivity areas, SafeWalk works offline as a PWA, queueing incident reports locally with cryptographic idempotency keys that sync automatically once back online."
+    "title": "Live Journey Guardian & Cryptographic Security",
+    "tag": "SECURITY & PRIVACY BLUEPRINT",
+    "start_time": 160.44,
+    "end_time": 196.92,
+    "duration": 36.48,
+    "text": "For lone journeys, users activate Live Journey Guardian. Designed with privacy by default, the user gives explicit consent and chooses her check-in interval, for example every five minutes with a two-minute grace period. SafeWalk issues a high-entropy 32-byte cryptographic sharing token, storing hashes using SHA-256 and never exposing database IDs. Periodic prompts confirm user safety. If a check-in is missed, our server triggers simulated alerts with GPS coordinates to trusted contacts, who can tap I am responding to confirm help is underway."
   },
   {
     "scene_id": "scene_06",
-    "title": "Safety Intelligence & Campus Dashboard",
-    "start_time": 184.75,
-    "end_time": 211.49,
-    "duration": 26.74,
-    "text": "For campus administrations and municipal authorities, SafeWalk provides an interactive Safety Intelligence Dashboard. All metrics are computed directly from live database records. Authorities can monitor infrastructure gaps like streetlight outages and examine privacy-preserving geospatial risk clusters to plan preventive safety audits without compromising individual travel histories."
+    "title": "Live Guardian Interface & Simulated Alerts",
+    "tag": "AUTONOMOUS CHECK-IN ENGINE",
+    "start_time": 196.92,
+    "end_time": 223.48999999999998,
+    "duration": 26.57,
+    "text": "On the Live Guardian dashboard, you can see the active session in real-time. The user sees the remaining grace period, battery-efficient tracking, and emergency panic buttons. In our simulated contact viewer, trusted family members and campus security can monitor the journey securely without creating user accounts. The moment an alert is acknowledged, the user interface updates with an empathetic confirmation badge."
   },
   {
     "scene_id": "scene_07",
-    "title": "Technical Architecture & Conclusion",
-    "start_time": 211.49,
-    "end_time": 242.02,
-    "duration": 30.53,
-    "text": "Under the hood, SafeWalk is built on Python, Streamlit, Folium, and SQLite, powered by OSRM pedestrian routing, OpenStreetMap Overpass spatial queries, and Google Gemini AI grounded in safety standards. With over 35 structured commits and comprehensive tests, SafeWalk RaahSaathi ensures women don't just reach their destination faster, but safer. Once again, I am Prince Pundir, and thank you for watching!"
+    "title": "Multilingual AI Voice Reporting & Offline PWA Sync",
+    "tag": "NATURAL LANGUAGE & RESILIENCE",
+    "start_time": 223.48999999999998,
+    "end_time": 260.21,
+    "duration": 36.72,
+    "text": "Filling out forms in the dark is frustrating and slow. SafeWalk supports Multilingual AI Voice Reporting. Users speak naturally in Hindi, English, or Hinglish: for example, Bus stand ke paas light nahi jal rahi hai aur raat mein bahut andhera rehta hai. Our NLP engine classifies the incident category, extracts a normalized draft, and requires user confirmation before saving. Even in basement parking or low-signal zones, our PWA offline queue stores reports locally with cryptographic idempotency keys, syncing seamlessly once online."
+  },
+  {
+    "scene_id": "scene_08",
+    "title": "Safety Intelligence Dashboard & Conclusion",
+    "tag": "INSTITUTIONAL OVERSIGHT & CLOSING",
+    "start_time": 260.21,
+    "end_time": 297.03,
+    "duration": 36.82,
+    "text": "Finally, SafeWalk empowers campus administrations and municipal authorities through our Safety Intelligence Dashboard. All statistics are computed live from active database records. Authorities can monitor infrastructure gaps like recurring streetlight outages and examine privacy-preserving 1.1-kilometer spatial clusters without compromising individual travel histories. SafeWalk RaahSaathi bridges the gap between raw maps and genuine peace of mind. Every woman deserves the safest journey home. Once again, I am Prince Pundir, and thank you for watching!"
   }
 ]
