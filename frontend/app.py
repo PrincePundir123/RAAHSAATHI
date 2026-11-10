@@ -518,32 +518,222 @@ with tab1:
                 st.error(r_res.get("error", "Route planning failed."))
 
     col_map, col_report = st.columns([7, 5])
+
+    # State for selected segment
+    if "selected_segment_id" not in st.session_state:
+        st.session_state.selected_segment_id = None
     
     with col_map:
         st.markdown(f"### Interactive Map: {html.escape(st.session_state.city)}, {html.escape(st.session_state.country)}")
+        
+        # Legend for Explainable Segments
+        st.markdown("""
+        <div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:10px; font-size:12px; font-weight:600; color:#334155;">
+          <span style="display:inline-flex; align-items:center; gap:5px;"><span style="width:12px; height:12px; border-radius:3px; background:#059669; display:inline-block;"></span> Lower observed risk</span>
+          <span style="display:inline-flex; align-items:center; gap:5px;"><span style="width:12px; height:12px; border-radius:3px; background:#D97706; display:inline-block;"></span> Mixed indicators</span>
+          <span style="display:inline-flex; align-items:center; gap:5px;"><span style="width:12px; height:12px; border-radius:3px; background:#DC2626; display:inline-block;"></span> Elevated reported-risk</span>
+          <span style="display:inline-flex; align-items:center; gap:5px;"><span style="width:12px; height:12px; border-radius:3px; border:2px dashed #64748B; display:inline-block;"></span> Insufficient data</span>
+        </div>
+        """, unsafe_allow_html=True)
+
         m = build_safety_map(center=st.session_state.map_center)
         if m is not None:
             if len(st.session_state.routes) >= 2:
-                m = add_routes_to_map(m, st.session_state.routes[0], st.session_state.routes[1])
+                m = add_routes_to_map(
+                    m,
+                    st.session_state.routes[0],
+                    st.session_state.routes[1],
+                    selected_segment_id=st.session_state.selected_segment_id
+                )
             elif len(st.session_state.routes) == 1:
-                m = add_routes_to_map(m, st.session_state.routes[0], st.session_state.routes[0])
-            st_folium(m, height=480, use_container_width=True, key="safewalk_map_view")
+                m = add_routes_to_map(
+                    m,
+                    st.session_state.routes[0],
+                    st.session_state.routes[0],
+                    selected_segment_id=st.session_state.selected_segment_id
+                )
+            st_folium(m, height=520, use_container_width=True, key="safewalk_map_view")
             
     with col_report:
         if st.session_state.routes:
             safe, fast = st.session_state.routes[0], st.session_state.routes[-1]
-            score = safe.get('safety_avg', 70)
+            seg_intel = safe.get("segment_intelligence") or {}
+            segments_list = seg_intel.get("segments", [])
+
+            # --- OVERALL ROUTE EXPLANATION CARD (FEATURE 6) ---
+            st.markdown("### Route Intelligence Overview")
             
-            st.markdown("### Route Metrics")
-            m1, m2 = st.columns(2)
-            m1.metric("Safety Score", f"{score} / 100")
-            m2.metric("Walk Time", f"{safe.get('duration_min', 0)} mins")
+            score = seg_intel.get("overall_score", safe.get('safety_avg', 70))
+            overall_class = seg_intel.get("overall_classification", "Mixed safety indicators")
+            overall_conf = seg_intel.get("overall_confidence", "Medium confidence")
+            coverage = seg_intel.get("coverage_percentage", 65)
             
-            m3, m4 = st.columns(2)
-            m3.metric("Danger Zones", len(safe.get('danger_zones', [])))
-            extra = safe.get('duration_min', 0) - fast.get('duration_min', 0)
-            m4.metric("Extra Time", f"+{extra} mins" if extra >= 0 else f"{extra} mins")
+            # Badge styling
+            conf_badge_bg = "#ECFDF5" if "High" in overall_conf else "#EFF6FF" if "Medium" in overall_conf else "#FEF3C7" if "Low" in overall_conf else "#F1F5F9"
+            conf_badge_color = "#047857" if "High" in overall_conf else "#1D4ED8" if "Medium" in overall_conf else "#B45309" if "Low" in overall_conf else "#475569"
+
+            st.markdown(f"""
+            <div style="background:#FFFFFF; border:1.5px solid #E2E8F0; border-radius:14px; padding:16px; margin-bottom:16px; box-shadow:0 4px 14px rgba(0,0,0,0.04);">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                <div>
+                  <span style="font-size:12px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:0.5px;">Recommendation</span>
+                  <div style="font-size:17px; font-weight:800; color:#0F172A;">{html.escape(overall_class)}</div>
+                </div>
+                <div style="text-align:right;">
+                  <span style="background:{conf_badge_bg}; color:{conf_badge_color}; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:700;">
+                    {html.escape(overall_conf)}
+                  </span>
+                </div>
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:12px; text-align:center;">
+                <div style="background:#F8FAFC; padding:8px; border-radius:10px;">
+                  <div style="font-size:11px; color:#64748B; font-weight:600;">Safety Score</div>
+                  <div style="font-size:18px; font-weight:800; color:#0F172A;">{score}<small style="font-size:11px; color:#94A3B8;">/100</small></div>
+                </div>
+                <div style="background:#F8FAFC; padding:8px; border-radius:10px;">
+                  <div style="font-size:11px; color:#64748B; font-weight:600;">Data Coverage</div>
+                  <div style="font-size:18px; font-weight:800; color:#0F172A;">{coverage}%</div>
+                </div>
+                <div style="background:#F8FAFC; padding:8px; border-radius:10px;">
+                  <div style="font-size:11px; color:#64748B; font-weight:600;">Segments</div>
+                  <div style="font-size:18px; font-weight:800; color:#0F172A;">{len(segments_list)}</div>
+                </div>
+              </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Route summary reasons
+            reasons = seg_intel.get("summary_reasons", [])
+            if reasons:
+                with st.expander("Why this route was recommended:", expanded=True):
+                    for r in reasons:
+                        st.markdown(f"• {html.escape(r)}")
+                    st.caption("*Note: Safety scores represent relative reported-risk indicators from open data and community reports, not real-world guarantees.*")
+
+            st.divider()
+
+            # --- SEGMENT INFORMATION PANEL (FEATURE 5) ---
+            st.markdown("### Segment-Level Deep Dive")
             
+            if segments_list:
+                # Segment Selector Dropdown
+                options = [f"{s['title']} ({s['safety_score']}/100 - {s['qualitative_class']})" for s in segments_list]
+                
+                # Find default index
+                default_idx = 0
+                if st.session_state.selected_segment_id:
+                    for i, s in enumerate(segments_list):
+                        if s["segment_id"] == st.session_state.selected_segment_id:
+                            default_idx = i
+                            break
+                            
+                chosen_opt = st.selectbox(
+                    "Inspect individual route segment:",
+                    options=options,
+                    index=default_idx,
+                    key="segment_selector_sb"
+                )
+                
+                # Parse chosen segment index
+                chosen_idx = options.index(chosen_opt)
+                active_seg = segments_list[chosen_idx]
+                st.session_state.selected_segment_id = active_seg["segment_id"]
+
+                # Segment Details Card
+                seg_conf = active_seg["confidence"]
+                seg_score = active_seg["safety_score"]
+                seg_class = active_seg["qualitative_class"]
+                seg_ev = active_seg["evidence"]
+
+                st.markdown(f"""
+                <div style="background:#FFFFFF; border:2px solid {active_seg['status_color']}; border-radius:14px; padding:16px; margin-top:10px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <b style="font-size:15px; color:#0F172A;">{html.escape(active_seg['title'])}</b>
+                    <span style="background:{active_seg['status_color']}20; color:{active_seg['status_color']}; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:800;">
+                      {html.escape(seg_class)}
+                    </span>
+                  </div>
+                  <div style="font-size:12px; color:#64748B; margin-top:4px;">
+                    Length: <b>{round(active_seg['distance_m'])}m</b> • Walking time: ~<b>{round(active_seg['duration_sec'])}s</b> • Road: <b>{html.escape(active_seg['road_name'])}</b>
+                  </div>
+                  <hr style="margin:10px 0; border:0; border-top:1px solid #E2E8F0;">
+                  <div style="font-size:13px; color:#1E293B; line-height:1.5;">
+                    <b>Assessment Explanation:</b><br>{html.escape(active_seg['explanation'])}
+                  </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                # Segment Evidence & Provenance Tabs
+                ev_tab1, ev_tab2, ev_tab3 = st.tabs(["Available Evidence", "Score Breakdown", "Confidence Audit"])
+                
+                with ev_tab1:
+                    st.markdown("**1. Street Lighting:**")
+                    lit_info = seg_ev.get("lighting", {})
+                    lit_icon = "💡" if lit_info.get("status") == "present" else "🌑" if lit_info.get("status") == "absent" else "❓"
+                    st.markdown(f"{lit_icon} **Status:** `{lit_info.get('status')}` — {html.escape(lit_info.get('details', ''))}")
+                    st.caption(f"Source: *{lit_info.get('source')}* | Retrieved: `{lit_info.get('retrieved_at')}`")
+
+                    st.markdown("**2. Commercial Activity:**")
+                    comm_info = seg_ev.get("commercial", {})
+                    st.markdown(f"🏪 **Mapped venues:** **{comm_info.get('mapped_count', 0)}** establishments within 150m.")
+                    if comm_info.get("sample_places"):
+                        sample_names = ", ".join([p["name"] for p in comm_info["sample_places"]])
+                        st.caption(f"Establishments: {html.escape(sample_names)}")
+                    st.caption(f"Source: *{comm_info.get('source')}* (Note: Real-time open hours not verified)")
+
+                    st.markdown("**3. Community Incidents & Reports:**")
+                    inc_info = seg_ev.get("incidents", {})
+                    items = inc_info.get("items", [])
+                    if items:
+                        for inc in items:
+                            st.warning(
+                                f"⚠️ **{html.escape(inc['category'])}** ({inc['relative_time']})\n\n"
+                                f"Distance: {inc['distance_m']}m away | Severity: {inc['severity']}/3 | "
+                                f"Status: *{inc['status_label']}*\n\n"
+                                f"Ref: `{inc['source_reference']}`\n\n"
+                                f"\"{html.escape(inc['description'])}\""
+                            )
+                    else:
+                        st.success("No active community incident reports located within 250m of this section.")
+
+                    st.markdown("**4. Emergency & Assistance Facilities:**")
+                    em_info = seg_ev.get("emergency", {})
+                    if em_info.get("status") == "mapped_nearby":
+                        near = em_info["nearest_facility"]
+                        st.info(f"🚓 **{html.escape(near['name'])}** ({near['type']}) mapped **{near['distance_m']}m** away.")
+                        st.caption(f"Source: *{em_info.get('source')}* (Operational status not guaranteed)")
+                    else:
+                        st.caption("No police station or hospital mapped within 800m.")
+
+                with ev_tab2:
+                    st.markdown(f"**Baseline Score:** 100/100 ➔ **Final:** `{seg_score}/100`")
+                    for factor in active_seg.get("score_breakdown", []):
+                        d_val = factor["delta"]
+                        color_cls = "green" if d_val > 0 else "red" if d_val < 0 else "gray"
+                        sign = "+" if d_val > 0 else ""
+                        st.markdown(
+                            f"**{factor['factor']}** (`{sign}{d_val}` pts)\n\n"
+                            f"<small style='color:#64748B;'>{html.escape(factor['evidence'])} "
+                            f"(Source: *{html.escape(factor['source'])}*)</small>",
+                            unsafe_allow_html=True
+                        )
+                        st.divider()
+
+                with ev_tab3:
+                    st.markdown(f"**Data Confidence Level:** **{seg_conf['confidence_level']}** ({seg_conf['confidence_score']}/100)")
+                    st.progress(seg_conf["confidence_score"] / 100.0)
+                    st.markdown(f"**Attribute Coverage:** **{seg_conf['coverage_percentage']}%**")
+                    
+                    st.markdown(f"• **Confirmed Categories:** {', '.join(seg_conf.get('confirmed_categories', []))}")
+                    if seg_conf.get("missing_categories"):
+                        st.markdown(f"• **Missing/Unknown:** {', '.join(seg_conf.get('missing_categories', []))}")
+                    
+                    with st.expander("Confidence Pillars Breakdown"):
+                        for p_name, p_val in seg_conf.get("pillar_scores", {}).items():
+                            st.write(f"- {p_name.capitalize()}: **{p_val}/100**")
+            else:
+                st.info("Route segment breakdown is available once a route is generated.")
+                
             st.divider()
             st.markdown("### AI Route Safety Briefing")
             brief = st.session_state.get("current_briefing")
