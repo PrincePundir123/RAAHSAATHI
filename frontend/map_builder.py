@@ -230,3 +230,76 @@ def add_routes_to_map(m, safe_route, fast_route, selected_segment_id=None):
         ).add_to(m)
 
     return m
+
+
+def add_safestops_to_map(m, safestops: list, user_location: list = None):
+    """
+    Renders SafeStops markers with custom category icons, verification badges,
+    and direct navigation links on the Folium map.
+    """
+    if not HAS_FOLIUM or m is None or not safestops:
+        return m
+
+    # Category color and icon mapping
+    cat_styling = {
+        "police": {"color": "blue", "icon": "shield", "bg": "#1E40AF"},
+        "hospital": {"color": "red", "icon": "plus", "bg": "#DC2626"},
+        "campus_security": {"color": "purple", "icon": "graduation-cap", "bg": "#7C3AED"},
+        "pharmacy": {"color": "green", "icon": "medkit", "bg": "#059669"},
+        "community_help": {"color": "orange", "icon": "heart", "bg": "#D97706"}
+    }
+
+    stops_cluster = MarkerCluster(name="SafeStops Assistance Points").add_to(m)
+
+    for s in safestops:
+        lat = s["latitude"]
+        lng = s["longitude"]
+        cat = s["category"]
+        style = cat_styling.get(cat, {"color": "gray", "icon": "info-sign", "bg": "#64748B"})
+        
+        verif = s.get("verification_status", "PUBLIC FACILITY")
+        v_color = s.get("verification_badge_color", "#3B82F6")
+
+        popup_html = f"""
+        <div style="font-family:'Plus Jakarta Sans',sans-serif; min-width:220px; padding:4px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="background:{style['bg']}; color:#FFFFFF; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700;">
+                    {s.get('category_icon', '📍')} {s.get('category_label', cat)}
+                </span>
+                <span style="border:1px solid {v_color}; color:{v_color}; padding:2px 6px; border-radius:10px; font-size:9px; font-weight:800;">
+                    {verif}
+                </span>
+            </div>
+            <b style="font-size:14px; color:#0F172A; display:block; margin-bottom:4px;">{s['name']}</b>
+            <div style="font-size:11px; color:#475569; margin-bottom:4px;">
+                📍 {s.get('address', 'Address not listed')}<br>
+                🕒 <b>{s.get('opening_hours', 'Hours unknown')}</b><br>
+                📞 {s.get('phone', 'Not available')}
+            </div>
+            <div style="font-size:11px; font-weight:700; color:#059669; margin:6px 0;">
+                🚶 ~{s.get('distance_m', 0)}m ({s.get('walking_time_min', 1)} min walk)
+            </div>
+            <div style="font-size:10px; color:#64748B; background:#F8FAFC; padding:4px; border-radius:6px; margin-bottom:6px;">
+                <b>Source:</b> {s.get('source_reference', 'Directory')}<br>
+                <b>Evidence:</b> {s.get('verification_evidence', 'Public registry')}
+            </div>
+        </div>
+        """
+
+        folium.Marker(
+            location=[lat, lng],
+            popup=folium.Popup(popup_html, max_width=280),
+            tooltip=f"{s.get('category_icon', '🛡️')} {s['name']} (~{s.get('distance_m', 0)}m)",
+            icon=folium.Icon(color=style["color"], icon=style["icon"], prefix="fa")
+        ).add_to(stops_cluster)
+
+    if user_location and len(user_location) == 2:
+        folium.Marker(
+            location=user_location,
+            popup="<b>Your Current / Selected Location</b>",
+            icon=folium.Icon(color="darkpurple", icon="user", prefix="fa"),
+            tooltip="You are here"
+        ).add_to(m)
+
+    return m
+
