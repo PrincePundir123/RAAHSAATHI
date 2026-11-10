@@ -1,0 +1,13 @@
+services:
+  safewalk-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: safewalk_v2
+    ports:
+      - "8501:8501"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    restart: unless-stopped
+    volumes:
+      - ./backend/safewalk.db:/app/backend/safewalk.db
