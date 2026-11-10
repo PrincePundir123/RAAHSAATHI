@@ -1,0 +1,20 @@
+[00:00:00,000 --> 00:00:39,430] SCENE_01 (Introduction & The Core Problem)
+Text: Hello everyone! I am Prince Pundir, and today I am excited to present SafeWalk RaahSaathi, an autonomous, AI-grounded women's safety navigation platform. Every day, millions of women commute home from universities and workplaces. Mainstream navigation apps optimize purely for speed, often routing women through dark, unmonitored alleys just to save ninety seconds. SafeWalk redefines navigation by prioritizing human safety over transit time, combining real road geometry, verified assistance havens, and explainable spatial intelligence.
+
+[00:00:39,430 --> 00:01:21,600] SCENE_02 (Dual-Route Planning & Segment Intelligence)
+Text: Let us see it in action. Starting our journey in Dehradun at 10:00 PM, notice our dual routing: the red dashed line is the shortest path, cutting through high-risk stretches. The emerald line is our Safest Route. SafeWalk introduces Explainable Segment-Level Route Intelligence, dividing the walking path into 100 to 200 meter sections. For each segment, our engine reveals exact evidence: commercial footfall, street lighting, and diurnal time penalties. Most importantly, we distinguish safety from data confidence so unmonitored roads are never falsely marked safe.
+
+[00:01:21,600 --> 00:01:57,740] SCENE_03 (SafeStops Nearby Assistance)
+Text: When a user feels uncomfortable or followed, she opens SafeStops. SafeStops indexes vetted assistance havens: 24/7 police stations, campus security desks, emergency hospitals, and verified late-night pharmacies. We enforce strict data provenance, distinguishing open public facilities from partner-verified institutional desks. With one tap on Navigate to Nearest Help Point, SafeWalk calculates the safest walking path directly to the closest safe haven with instant contact options.
+
+[00:01:57,740 --> 00:02:33,500] SCENE_04 (Live Journey Guardian)
+Text: For lone journeys, users activate Live Journey Guardian: a privacy-first tracking and automated check-in engine. Users set a check-in interval with a grace period. SafeWalk issues a high-entropy 32-byte cryptographic sharing token, never exposing database IDs. During the trip, periodic check-ins confirm user safety. If a check-in is missed or emergency assistance is triggered, our server immediately dispatches simulated alerts to trusted contacts, who can acknowledge that help is on the way.
+
+[00:02:33,500 --> 00:03:04,750] SCENE_05 (Multilingual AI Voice Reporting & Offline PWA)
+Text: SafeWalk also features Multilingual AI Voice Reporting. Users can speak naturally in Hindi, English, or Hinglish. Our NLP engine detects Romanized Hinglish, preserves spoken transcripts, and drafts structured reports for user confirmation. And in low-connectivity areas, SafeWalk works offline as a PWA, queueing incident reports locally with cryptographic idempotency keys that sync automatically once back online.
+
+[00:03:04,750 --> 00:03:31,490] SCENE_06 (Safety Intelligence & Campus Dashboard)
+Text: For campus administrations and municipal authorities, SafeWalk provides an interactive Safety Intelligence Dashboard. All metrics are computed directly from live database records. Authorities can monitor infrastructure gaps like streetlight outages and examine privacy-preserving geospatial risk clusters to plan preventive safety audits without compromising individual travel histories.
+
+[00:03:31,490 --> 00:04:02,020] SCENE_07 (Technical Architecture & Conclusion)
+Text: Under the hood, SafeWalk is built on Python, Streamlit, Folium, and SQLite, powered by OSRM pedestrian routing, OpenStreetMap Overpass spatial queries, and Google Gemini AI grounded in safety standards. With over 35 structured commits and comprehensive tests, SafeWalk RaahSaathi ensures women don't just reach their destination faster, but safer. Once again, I am Prince Pundir, and thank you for watching!

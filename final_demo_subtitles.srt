@@ -1,0 +1,119 @@
+1
+00:00:00,000 --> 00:00:07,886
+Hello everyone
+
+2
+00:00:07,886 --> 00:00:15,772
+I am Prince Pundir, and today I am excited to present SafeWalk RaahSaathi, an autonomous, AI-grounded women's safety navigation platform
+
+3
+00:00:15,772 --> 00:00:23,658
+Every day, millions of women commute home from universities and workplaces
+
+4
+00:00:23,658 --> 00:00:31,544
+Mainstream navigation apps optimize purely for speed, often routing women through dark, unmonitored alleys just to save ninety seconds
+
+5
+00:00:31,544 --> 00:00:39,430
+SafeWalk redefines navigation by prioritizing human safety over transit time, combining real road geometry, verified assistance havens, and explainable spatial intelligence
+
+6
+00:00:39,430 --> 00:00:46,458
+Let us see it in action
+
+7
+00:00:46,458 --> 00:00:53,487
+Starting our journey in Dehradun at 10:00 PM, notice our dual routing: the red dashed line is the shortest path, cutting through high-risk stretches
+
+8
+00:00:53,487 --> 00:01:00,515
+The emerald line is our Safest Route
+
+9
+00:01:00,515 --> 00:01:07,543
+SafeWalk introduces Explainable Segment-Level Route Intelligence, dividing the walking path into 100 to 200 meter sections
+
+10
+00:01:07,543 --> 00:01:14,572
+For each segment, our engine reveals exact evidence: commercial footfall, street lighting, and diurnal time penalties
+
+11
+00:01:14,572 --> 00:01:21,600
+Most importantly, we distinguish safety from data confidence so unmonitored roads are never falsely marked safe
+
+12
+00:01:21,600 --> 00:01:30,635
+When a user feels uncomfortable or followed, she opens SafeStops
+
+13
+00:01:30,635 --> 00:01:39,670
+SafeStops indexes vetted assistance havens: 24/7 police stations, campus security desks, emergency hospitals, and verified late-night pharmacies
+
+14
+00:01:39,670 --> 00:01:48,705
+We enforce strict data provenance, distinguishing open public facilities from partner-verified institutional desks
+
+15
+00:01:48,705 --> 00:01:57,740
+With one tap on Navigate to Nearest Help Point, SafeWalk calculates the safest walking path directly to the closest safe haven with instant contact options
+
+16
+00:01:57,740 --> 00:02:04,892
+For lone journeys, users activate Live Journey Guardian: a privacy-first tracking and automated check-in engine
+
+17
+00:02:04,892 --> 00:02:12,044
+Users set a check-in interval with a grace period
+
+18
+00:02:12,044 --> 00:02:19,196
+SafeWalk issues a high-entropy 32-byte cryptographic sharing token, never exposing database IDs
+
+19
+00:02:19,196 --> 00:02:26,348
+During the trip, periodic check-ins confirm user safety
+
+20
+00:02:26,348 --> 00:02:33,500
+If a check-in is missed or emergency assistance is triggered, our server immediately dispatches simulated alerts to trusted contacts, who can acknowledge that help is on the way
+
+21
+00:02:33,500 --> 00:02:41,312
+SafeWalk also features Multilingual AI Voice Reporting
+
+22
+00:02:41,312 --> 00:02:49,125
+Users can speak naturally in Hindi, English, or Hinglish
+
+23
+00:02:49,125 --> 00:02:56,938
+Our NLP engine detects Romanized Hinglish, preserves spoken transcripts, and drafts structured reports for user confirmation
+
+24
+00:02:56,938 --> 00:03:04,750
+And in low-connectivity areas, SafeWalk works offline as a PWA, queueing incident reports locally with cryptographic idempotency keys that sync automatically once back online
+
+25
+00:03:04,750 --> 00:03:13,663
+For campus administrations and municipal authorities, SafeWalk provides an interactive Safety Intelligence Dashboard
+
+26
+00:03:13,663 --> 00:03:22,577
+All metrics are computed directly from live database records
+
+27
+00:03:22,577 --> 00:03:31,490
+Authorities can monitor infrastructure gaps like streetlight outages and examine privacy-preserving geospatial risk clusters to plan preventive safety audits without compromising individual travel histories
+
+28
+00:03:31,490 --> 00:03:41,667
+Under the hood, SafeWalk is built on Python, Streamlit, Folium, and SQLite, powered by OSRM pedestrian routing, OpenStreetMap Overpass spatial queries, and Google Gemini AI grounded in safety standards
+
+29
+00:03:41,667 --> 00:03:51,843
+With over 35 structured commits and comprehensive tests, SafeWalk RaahSaathi ensures women don't just reach their destination faster, but safer
+
+30
+00:03:51,843 --> 00:04:02,020
+Once again, I am Prince Pundir, and thank you for watching
