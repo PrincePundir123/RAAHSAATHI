@@ -4,5 +4,6 @@ python-dotenv
 streamlit
 folium
 streamlit-folium
+pillow
 pytest>=7.0.0
 pytest-cov>=4.0.0
