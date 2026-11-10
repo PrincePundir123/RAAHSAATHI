@@ -16,7 +16,7 @@ for p in [BASE_DIR, BACKEND_DIR, AI_BACKEND_DIR, os.path.dirname(os.path.abspath
     if p not in sys.path:
         sys.path.insert(0, p)
 
-from map_builder import build_safety_map, add_routes_to_map
+from map_builder import build_safety_map, add_routes_to_map, add_safestops_to_map
 
 # Imports from unified safewalk_service API
 from safewalk_service import (
@@ -26,6 +26,19 @@ from safewalk_service import (
     ingest_city_news_reports,
     handle_vote,
     ask_safewalk_ai,
+    find_nearby_safestops,
+    add_community_safestop,
+    get_trusted_contacts,
+    add_trusted_contact,
+    delete_trusted_contact,
+    create_journey,
+    record_location_update,
+    confirm_checkin,
+    process_server_side_escalations,
+    acknowledge_alert,
+    complete_or_cancel_journey,
+    get_journey_by_share_token,
+    get_latest_journey_location
 )
 from report_manager import get_city_stats, get_recent_reports_in_city, upvote_incident, downvote_incident
 from geocoder import geocode_address, get_city_country_from_coords, get_city_landmark_suggestions
@@ -434,8 +447,10 @@ st.markdown('<div class="main-title">SafeWalk — AI Women&#39;s Safety Navigati
 st.markdown(f'<div class="sub-title">Real-time crowdsourced safety routes & Gemini AI guidance for <b>{html.escape(st.session_state.city)}, {html.escape(st.session_state.country)}</b></div>', unsafe_allow_html=True)
 
 # Tabs
-tab1, tab2, tab3, tab4 = st.tabs([
-    "Plan Safe Route", 
+tab1, tab_safestops, tab_guardian, tab2, tab3, tab4 = st.tabs([
+    "Plan Safe Route",
+    "SafeStops Help Points",
+    "Live Journey Guardian",
     "Report Incident", 
     "Live Community Feed", 
     "Ask SafeWalk AI & SOS"
@@ -746,6 +761,391 @@ with tab1:
             st.info(brief)
         else:
             st.info(f"Select locations above and click **Find Safest Route** to calculate walking routes in **{st.session_state.city}**.")
+
+# -----------------------------------------------------------------------------
+# TAB: SAFESTOPS - NEARBY ASSISTANCE LOCATIONS (FEATURE 2)
+# -----------------------------------------------------------------------------
+with tab_safestops:
+    st.markdown("### 🛡️ SafeStops — Find a Nearby Place to Get Assistance")
+    st.caption("Locate verified police stations, 24/7 hospitals, campus security booths, partner pharmacies, and community safe havens.")
+
+    c_ss_ctrl1, c_ss_ctrl2, c_ss_ctrl3 = st.columns([3, 3, 4])
+    with c_ss_ctrl1:
+        ss_cat = st.selectbox(
+            "Filter Facility Category:",
+            options=["all", "police", "hospital", "campus_security", "pharmacy", "community_help"],
+            format_func=lambda x: "All Assistance Types" if x == "all" else {
+                "police": "🚓 Police Facilities",
+                "hospital": "🏥 Hospitals & Emergency",
+                "campus_security": "🎓 Campus Security Desks",
+                "pharmacy": "💊 24/7 Pharmacies",
+                "community_help": "🛡️ Participating Safe Havens"
+            }.get(x, x),
+            key="ss_category_select"
+        )
+    with c_ss_ctrl2:
+        ss_radius = st.select_slider(
+            "Search Radius:",
+            options=[0.5, 1.0, 2.0, 5.0, 10.0],
+            value=2.0,
+            format_func=lambda r: f"{int(r*1000)}m" if r < 1.0 else f"{int(r)} km",
+            key="ss_radius_slider"
+        )
+    with c_ss_ctrl3:
+        st.write("")
+        st.write("")
+        c_ss_btn1, c_ss_btn2 = st.columns(2)
+        with c_ss_btn1:
+            refresh_ss = st.button("Search SafeStops", use_container_width=True, type="primary")
+        with c_ss_btn2:
+            quick_help_btn = st.button("🚨 Navigate to Nearest Help", use_container_width=True)
+
+    # Reference coordinate for SafeStops search
+    ref_lat, ref_lng = st.session_state.map_center
+
+    # Query SafeStops
+    nearby_stops = find_nearby_safestops(ref_lat, ref_lng, radius_km=ss_radius, category_filter=ss_cat, limit=12)
+
+    # Quick Emergency Action
+    if quick_help_btn and nearby_stops:
+        target_help = nearby_stops[0]
+        st.session_state["direct_start_text_input"] = f"{st.session_state.city}"
+        st.session_state["direct_dest_text_input"] = target_help["name"]
+        st.success(f"Navigating to nearest help: **{target_help['name']}** ({target_help['distance_m']}m away)!")
+        # Auto-trigger route planning
+        r_res = plan_safe_route(f"{ref_lat},{ref_lng}", f"{target_help['latitude']},{target_help['longitude']}", hour=travel_hour, fallback_city=st.session_state.city)
+        if r_res["success"]:
+            st.session_state.routes = [r_res["routes"]["safest"], r_res["routes"]["fastest"]]
+            st.session_state.current_briefing = r_res["ai_safety_briefing"]
+            st.rerun()
+
+    ss_col_map, ss_col_list = st.columns([7, 5])
+
+    with ss_col_map:
+        st.markdown(f"#### SafeStops Map ({len(nearby_stops)} points found within {ss_radius}km)")
+        
+        # Legend
+        st.markdown("""
+        <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:8px; font-size:11px; font-weight:700;">
+          <span style="color:#1E40AF;">🚓 Police</span>
+          <span style="color:#DC2626;">🏥 Hospital/Trauma</span>
+          <span style="color:#7C3AED;">🎓 Campus Security</span>
+          <span style="color:#059669;">💊 Pharmacy</span>
+          <span style="color:#D97706;">🛡️ Safe Haven</span>
+          <span style="color:#475569; margin-left:auto;">✔ Verified Partner | 🌐 Public Facility</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        ss_map = build_safety_map(center=[ref_lat, ref_lng], zoom=13)
+        if ss_map is not None:
+            ss_map = add_safestops_to_map(ss_map, nearby_stops, user_location=[ref_lat, ref_lng])
+            st_folium(ss_map, height=520, use_container_width=True, key="safestops_map_view")
+
+    with ss_col_list:
+        st.markdown(f"#### Nearby Facilities Directory")
+        if nearby_stops:
+            for s in nearby_stops:
+                v_border = s["verification_badge_color"]
+                with st.container():
+                    st.markdown(f"""
+                    <div style="background:#FFFFFF; border-left:4px solid {v_border}; border-top:1px solid #E2E8F0; border-right:1px solid #E2E8F0; border-bottom:1px solid #E2E8F0; border-radius:12px; padding:12px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
+                      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                          <b style="font-size:14px; color:#0F172A;">{s['category_icon']} {html.escape(s['name'])}</b>
+                          <div style="font-size:11px; color:#64748B; margin-top:2px;">📍 {html.escape(s['address'])}</div>
+                        </div>
+                        <span style="background:{v_border}15; color:{v_border}; font-size:10px; font-weight:800; padding:3px 8px; border-radius:12px; border:1px solid {v_border}40;">
+                          {s['verification_status']}
+                        </span>
+                      </div>
+                      <div style="display:flex; gap:16px; font-size:11px; font-weight:600; color:#334155; margin:8px 0;">
+                        <span>🚶 <b>{s['distance_m']}m</b> (~{s['walking_time_min']} mins walk)</span>
+                        <span>🕒 <b>{html.escape(s['opening_hours'])}</b></span>
+                      </div>
+                      <div style="font-size:10px; color:#64748B; background:#F8FAFC; padding:6px; border-radius:6px;">
+                        <b>Provenance:</b> {html.escape(s['source_reference'])}<br>
+                        <b>Evidence:</b> {html.escape(s['verification_evidence'])}
+                      </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    c_act1, c_act2, c_act3 = st.columns([4, 4, 4])
+                    with c_act1:
+                        if s["phone"] and s["phone"] != "Not available":
+                            st.link_button(f"📞 Call {s['phone']}", f"tel:{s['phone']}", use_container_width=True)
+                        else:
+                            st.caption("Phone unlisted")
+                    with c_act2:
+                        if s["website"] and s["website"] != "Not available":
+                            st.link_button("🌐 Website", s["website"], use_container_width=True)
+                        else:
+                            st.caption("No website")
+                    with c_act3:
+                        if st.button("Walk Here ➔", key=f"nav_ss_{s['id']}", use_container_width=True):
+                            st.session_state["direct_start_text_input"] = f"{ref_lat},{ref_lng}"
+                            st.session_state["direct_dest_text_input"] = f"{s['latitude']},{s['longitude']}"
+                            # Calculate route
+                            r_res = plan_safe_route(f"{ref_lat},{ref_lng}", f"{s['latitude']},{s['longitude']}", hour=travel_hour, fallback_city=st.session_state.city)
+                            if r_res["success"]:
+                                st.session_state.routes = [r_res["routes"]["safest"], r_res["routes"]["fastest"]]
+                                st.session_state.current_briefing = r_res["ai_safety_briefing"]
+                                st.success(f"Route set to {s['name']}! Switch to 'Plan Safe Route' tab to view navigation steps.")
+                                st.rerun()
+                    st.divider()
+        else:
+            st.info(f"No SafeStops currently registered within {ss_radius}km. Broaden your search radius above or submit a community location below.")
+
+    # Expandable: Submit a new community safe haven
+    with st.expander("➕ Submit a Safe Haven or Assistance Point"):
+        st.caption("Community-submitted locations are marked as COMMUNITY-LISTED until audited by SafeWalk administrators.")
+        with st.form("community_safestop_form"):
+            c_sub1, c_sub2 = st.columns(2)
+            with c_sub1:
+                cs_name = st.text_input("Location / Facility Name:", placeholder="e.g. 24/7 Medicos Store")
+                cs_cat = st.selectbox("Category:", ["police", "hospital", "campus_security", "pharmacy", "community_help"])
+                cs_addr = st.text_input("Full Address:", placeholder="e.g. Near Mall Road entrance")
+            with c_sub2:
+                cs_phone = st.text_input("Contact Number (Optional):", placeholder="+91...")
+                cs_hours = st.text_input("Operating Hours:", value="Open 24/7")
+                cs_notes = st.text_area("Verification Notes / References:", placeholder="Describe why this location offers safety assistance...")
+            
+            sub_ss_btn = st.form_submit_button("Submit for Community Listing", type="primary")
+
+        if sub_ss_btn and cs_name.strip():
+            # Geocode the address or use map center
+            c_lat, c_lng = ref_lat, ref_lng
+            res_add = add_community_safestop(
+                name=cs_name,
+                category=cs_cat,
+                lat=c_lat,
+                lng=c_lng,
+                address=cs_addr,
+                phone=cs_phone,
+                opening_hours=cs_hours,
+                notes=cs_notes
+            )
+            if res_add["success"]:
+                st.success(f"SafeStop '{cs_name}' registered with status: **COMMUNITY-LISTED**.")
+                st.rerun()
+            else:
+                st.error(res_add.get("error", "Failed to add SafeStop."))
+
+# -----------------------------------------------------------------------------
+# TAB: LIVE JOURNEY GUARDIAN (FEATURE 3)
+# -----------------------------------------------------------------------------
+with tab_guardian:
+    st.markdown("### 🛡️ Live Journey Guardian — Real-Time Tracking & Trusted Contact Escalation")
+    st.caption("Share your journey with family & friends, schedule automated check-in deadlines, and escalate missed check-ins automatically.")
+
+    # Run background escalation cycle
+    process_server_side_escalations()
+
+    # Session State for User's Active Journey
+    if "active_journey" not in st.session_state:
+        st.session_state.active_journey = None
+
+    c_g_user, c_g_contacts = st.columns([7, 5])
+
+    with c_g_user:
+        # Check if user has an active journey
+        curr_j = st.session_state.active_journey
+
+        if curr_j:
+            j_id = curr_j["journey_id"]
+            # Fetch latest telemetry
+            loc_info = get_latest_journey_location(j_id)
+            share_tok = curr_j.get("share_token", "")
+            
+            st.markdown(f"""
+            <div style="background:#F0FDF4; border:2px solid #22C55E; border-radius:14px; padding:16px; margin-bottom:16px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <b style="font-size:16px; color:#15803D;">● Live Protected Journey in Progress</b>
+                <span style="background:#22C55E; color:#FFFFFF; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:800;">
+                  ACTIVE TELEMETRY
+                </span>
+              </div>
+              <div style="font-size:13px; color:#166534; margin-top:6px;">
+                Destination: <b>{curr_j.get('destination_name', 'Destination')}</b> • Expected Arrival: <b>{curr_j.get('expected_arrival', 'N/A')}</b>
+              </div>
+              <div style="font-size:12px; color:#374151; margin-top:4px;">
+                GPS Status: <b>{'Live (~' + str(loc_info['seconds_ago']) + 's ago)' if loc_info and not loc_info['is_stale'] else 'Telemetry Stale (>2m)' if loc_info else 'Awaiting Signal'}</b>
+              </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Check-in Action Bar
+            st.markdown("#### Check-In Status")
+            st.info(f"Next automated check-in scheduled for: **{curr_j.get('next_checkin_deadline', 'Pending')}**")
+            
+            c_chk1, c_chk2, c_chk3 = st.columns(3)
+            with c_chk1:
+                if st.button("🟢 I'm Okay", use_container_width=True, type="primary"):
+                    c_res = confirm_checkin(j_id, "im_okay")
+                    if c_res["success"]:
+                        curr_j["next_checkin_deadline"] = c_res["next_deadline"]
+                        st.toast("Check-in confirmed! Timer reset.", icon="✅")
+                        st.rerun()
+            with c_chk2:
+                if st.button("🚨 Need Assistance", use_container_width=True):
+                    a_res = confirm_checkin(j_id, "need_assistance")
+                    st.error("Emergency Alert dispatched to trusted contacts!")
+                    st.rerun()
+            with c_chk3:
+                if st.button("🏁 Complete Journey", use_container_width=True):
+                    complete_or_cancel_journey(j_id, is_completed=True)
+                    st.session_state.active_journey = None
+                    st.success("Journey marked complete. Location sharing terminated.")
+                    st.rerun()
+
+            # Shareable Guardian Token Link
+            st.markdown("#### Secure Temporary Contact Link")
+            st.code(f"https://safewalk.app/guardian?token={share_tok}", language="text")
+            st.caption("Only individuals with this unique cryptographically-hashed token can view your live progress. Access expires automatically after your trip ends.")
+
+            # Live GPS Simulation & Telemetry Update
+            with st.expander("Update Current GPS Coordinates"):
+                c_gps1, c_gps2 = st.columns(2)
+                with c_gps1:
+                    new_lat = st.number_input("Current Lat:", value=float(ref_lat), format="%.6f", key="sim_lat")
+                with c_gps2:
+                    new_lng = st.number_input("Current Lng:", value=float(ref_lng), format="%.6f", key="sim_lng")
+                if st.button("Broadcast Location Update", use_container_width=True):
+                    record_location_update(j_id, new_lat, new_lng, accuracy=8.0)
+                    st.success("Location update broadcasted to authorized contact viewers.")
+                    st.rerun()
+
+        else:
+            # Setup Form to Start New Journey
+            st.markdown("#### Start a Protected Journey")
+            with st.form("start_journey_form"):
+                j_dest = st.text_input("Destination:", value=f"College Hostel, {st.session_state.city}")
+                j_start_addr = st.text_input("Starting Address:", value=f"Main Gate, {st.session_state.city}")
+                
+                c_j_cfg1, c_j_cfg2, c_j_cfg3 = st.columns(3)
+                with c_j_cfg1:
+                    j_dur = st.number_input("Duration (Mins):", min_value=5, max_value=180, value=25)
+                with c_j_cfg2:
+                    j_chk_int = st.selectbox("Check-in Interval:", [2, 5, 10, 15], index=1, format_func=lambda m: f"Every {m} mins")
+                with c_j_cfg3:
+                    j_grace = st.selectbox("Grace Period:", [1, 2, 3, 5], index=1, format_func=lambda g: f"{g} mins grace")
+
+                j_note = st.text_area("Optional Journey Note for Contacts:", placeholder="e.g. Walking home with study group from central library...")
+                j_consent = st.checkbox("I explicitly grant permission to share my live location with selected trusted contacts for the duration of this trip.", value=True)
+                
+                start_j_btn = st.form_submit_button("Start Journey Guardian", type="primary")
+
+            if start_j_btn:
+                if not j_consent:
+                    st.error("Location sharing permission is required to activate Journey Guardian.")
+                else:
+                    # Get user contacts
+                    all_c = get_trusted_contacts(st.session_state.session_id)
+                    contact_ids = [c["id"] for c in all_c]
+                    
+                    j_res = create_journey(
+                        owner_user_id=st.session_state.session_id,
+                        start_lat=ref_lat,
+                        start_lng=ref_lng,
+                        start_address=j_start_addr,
+                        dest_lat=ref_lat + 0.015,
+                        dest_lng=ref_lng + 0.015,
+                        dest_name=j_dest,
+                        expected_duration_min=j_dur,
+                        checkin_interval_min=j_chk_int,
+                        grace_period_min=j_grace,
+                        selected_contact_ids=contact_ids,
+                        journey_note=j_note
+                    )
+                    if j_res["success"]:
+                        st.session_state.active_journey = {
+                            "journey_id": j_res["journey_id"],
+                            "destination_name": j_dest,
+                            "share_token": j_res["share_token"],
+                            "expected_arrival": j_res["expected_arrival"],
+                            "next_checkin_deadline": j_res["next_checkin_deadline"]
+                        }
+                        st.balloons()
+                        st.success("Journey Guardian active! Location sharing initiated.")
+                        st.rerun()
+                    else:
+                        st.error(j_res.get("error", "Failed to start journey."))
+
+    with c_g_contacts:
+        st.markdown("#### Trusted Contacts Management")
+        st.caption("Trusted contacts receive emergency SMS alerts when a check-in is missed or when you request assistance.")
+
+        contacts = get_trusted_contacts(st.session_state.session_id)
+        if contacts:
+            for c in contacts:
+                with st.container():
+                    st.markdown(f"""
+                    <div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:10px; margin-bottom:8px;">
+                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <b style="color:#0F172A; font-size:13px;">👤 {html.escape(c['contact_name'])}</b>
+                        <span style="font-size:10px; background:#EEF2FF; color:#4338CA; padding:2px 6px; border-radius:8px; font-weight:700;">
+                          {html.escape(c['relationship'] or 'Contact')}
+                        </span>
+                      </div>
+                      <div style="font-size:11px; color:#64748B; margin-top:2px;">
+                        📞 {html.escape(c['phone'] or 'No phone')} | ✉️ {html.escape(c['email'] or 'No email')}
+                      </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    if st.button("Remove Contact", key=f"del_c_{c['id']}"):
+                        delete_trusted_contact(c["id"], st.session_state.session_id)
+                        st.rerun()
+        else:
+            st.info("No trusted contacts added yet. Add trusted family members or friends below.")
+
+        with st.expander("➕ Add Trusted Contact"):
+            with st.form("add_contact_form"):
+                tc_name = st.text_input("Full Name:", placeholder="e.g. Sister / Roommate")
+                tc_phone = st.text_input("Mobile Phone (E.164):", placeholder="+91 98765 43210")
+                tc_email = st.text_input("Email (Optional):", placeholder="contact@example.com")
+                tc_rel = st.selectbox("Relationship:", ["Mother", "Father", "Sister", "Brother", "Friend", "Roommate", "Partner", "Guardian"])
+                tc_chan = st.selectbox("Preferred Alert Channel:", ["sms", "email", "in_app"])
+                
+                sub_tc_btn = st.form_submit_button("Save Trusted Contact", type="primary")
+
+            if sub_tc_btn and tc_name.strip():
+                add_res = add_trusted_contact(
+                    owner_user_id=st.session_state.session_id,
+                    name=tc_name,
+                    email=tc_email,
+                    phone=tc_phone,
+                    relationship=tc_rel,
+                    preferred_channel=tc_chan
+                )
+                if add_res["success"]:
+                    st.success(f"Added {tc_name} to trusted contacts.")
+                    st.rerun()
+                else:
+                    st.error(add_res.get("error", "Failed to add contact."))
+
+        # Contact Viewer Simulation Mode (Demonstrates Feature 16B - Contact Dashboard)
+        with st.expander("👁️ Preview Trusted Contact Dashboard (Token Viewer)"):
+            st.caption("Simulate how an invited trusted contact views the shared trip.")
+            sim_tok = st.text_input("Enter Share Token:", value=st.session_state.active_journey.get("share_token", "") if st.session_state.active_journey else "")
+            if sim_tok:
+                view_data = get_journey_by_share_token(sim_tok)
+                if view_data:
+                    st.markdown(f"""
+                    <div style="background:#F8FAFC; border:1.5px solid #CBD5E1; border-radius:12px; padding:12px;">
+                      <b style="color:#0F172A;">Trip Destination: {html.escape(view_data.get('destination_name', 'Destination'))}</b><br>
+                      <span>Status: <b>{view_data.get('status')}</b></span><br>
+                      <span>Expected Arrival: <b>{view_data.get('expected_arrival')}</b></span><br>
+                      <hr style="margin:6px 0;">
+                      <span>Note from user: <i>"{html.escape(view_data.get('journey_note') or 'None')}"</i></span>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    if st.button("🤝 Acknowledge Alert ('I am responding')", key="sim_ack_btn"):
+                        ack_res = acknowledge_alert(view_data["journey_id"], contact_id=1, contact_name="Mom")
+                        if ack_res["success"]:
+                            st.success("Alert acknowledged! Status transitioned to ASSISTANCE_ACKNOWLEDGED.")
+                            st.rerun()
+                else:
+                    st.error("Invalid or expired share token.")
 
 # -----------------------------------------------------------------------------
 # TAB 2: INCIDENT REPORTING (NLP)
