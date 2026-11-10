@@ -29,6 +29,19 @@ from report_manager import (
     calculate_weight,
 )
 from setup_db import init_database, save_incident
+from safestops_guardian_schema import init_safestops_and_guardian_schema
+from safestops_service import find_nearby_safestops, get_safestop_by_id, add_community_safestop
+from trusted_contacts_service import get_trusted_contacts, add_trusted_contact, delete_trusted_contact
+from journey_guardian_service import (
+    create_journey,
+    record_location_update,
+    confirm_checkin,
+    process_server_side_escalations,
+    acknowledge_alert,
+    complete_or_cancel_journey,
+    get_journey_by_share_token,
+    get_latest_journey_location
+)
 
 # AI Backend imports
 from genai_layer import (
@@ -42,8 +55,9 @@ from news_incident_fetcher import fetch_news_incidents_for_city
 
 
 def initialize_safewalk_system():
-    """Initializes SQLite database and ensures seeds and weights are ready."""
+    """Initializes SQLite database and ensures seeds, weights, and SafeStops/Guardian tables are ready."""
     init_database()
+    init_safestops_and_guardian_schema()
     update_all_weights()
     print("SafeWalk Integrated System initialized successfully.")
 
