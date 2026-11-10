@@ -16,7 +16,7 @@ Mainstream navigation applications (such as Google Maps and Apple Maps) optimize
 
 **SafeWalk (RaahSaathi)** re-engineers urban pedestrian navigation from the ground up by prioritizing **human safety and survival over raw transit time**.
 
-![Problem Comparison Matrix](docs/screenshots/graphic_01_problem_matrix.png)
+![Dual-Route Safe Navigation Interface](docs/screenshots/02_dual_route_map.png)
 
 ### Key Value Propositions
 * 🟢 **Dual-Route Safety Optimization:** Simultaneously calculates the standard shortest-path (*Fastest Route* in Coral Red) and the algorithmically optimized *Safest Route* (Emerald Green) avoiding unlit and high-risk zones.
