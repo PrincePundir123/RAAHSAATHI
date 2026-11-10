@@ -138,6 +138,11 @@ EXACT_LANDMARKS = {
     # Singapore
     "orchard road ion station, singapore": (1.3040, 103.8320),
     "marina bay sands promenade, singapore": (1.2838, 103.8591),
+
+    # Chandigarh
+    "sector 17 plaza, chandigarh": (30.7398, 76.7827),
+    "elante mall, chandigarh": (30.7054, 76.8013),
+    "sukhna lake, chandigarh": (30.7421, 76.8188),
     "clarke quay riverside, singapore": (1.2905, 103.8462),
     "bugis street market, singapore": (1.3008, 103.8550),
     "raffles place financial hub, singapore": (1.2839, 103.8515),
