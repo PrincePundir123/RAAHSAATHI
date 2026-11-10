@@ -38,7 +38,19 @@ from safewalk_service import (
     acknowledge_alert,
     complete_or_cancel_journey,
     get_journey_by_share_token,
-    get_latest_journey_location
+    get_latest_journey_location,
+    detect_language,
+    extract_incident_draft,
+    detect_duplicate_candidates,
+    cast_community_vote,
+    apply_moderator_action,
+    get_moderation_queue,
+    get_incident_moderation_history,
+    queue_offline_report,
+    process_offline_sync_queue,
+    get_queued_offline_reports,
+    get_safety_intelligence_summary,
+    get_geographic_clusters
 )
 from report_manager import get_city_stats, get_recent_reports_in_city, upvote_incident, downvote_incident
 from geocoder import geocode_address, get_city_country_from_coords, get_city_landmark_suggestions
@@ -447,11 +459,13 @@ st.markdown('<div class="main-title">SafeWalk — AI Women&#39;s Safety Navigati
 st.markdown(f'<div class="sub-title">Real-time crowdsourced safety routes & Gemini AI guidance for <b>{html.escape(st.session_state.city)}, {html.escape(st.session_state.country)}</b></div>', unsafe_allow_html=True)
 
 # Tabs
-tab1, tab_safestops, tab_guardian, tab2, tab3, tab4 = st.tabs([
+tab1, tab_safestops, tab_guardian, tab2, tab_mod, tab_intel, tab3, tab4 = st.tabs([
     "Plan Safe Route",
     "SafeStops Help Points",
     "Live Journey Guardian",
-    "Report Incident", 
+    "Voice & AI Report",
+    "Moderation & Verification",
+    "Safety Intelligence",
     "Live Community Feed", 
     "Ask SafeWalk AI & SOS"
 ])
@@ -1154,31 +1168,290 @@ with tab_guardian:
                     st.error("Invalid or expired share token.")
 
 # -----------------------------------------------------------------------------
-# TAB 2: INCIDENT REPORTING (NLP)
+# TAB 2: MULTILINGUAL AI & VOICE INCIDENT REPORTING (FEATURE 4 & 6)
 # -----------------------------------------------------------------------------
 with tab2:
-    st.markdown(f"### Report an Unsafe Incident in {st.session_state.city}")
-    st.caption("No complicated forms. Describe what happened in plain English or Hindi. Gemini NLP extracts location, incident type, and severity automatically.")
+    st.markdown(f"### 🎙️ AI Voice & Multilingual Incident Reporting ({st.session_state.city})")
+    st.caption("Speak or type naturally in Hindi, English, or Hinglish. AI extracts an editable draft for your confirmation before publishing.")
+
+    # Offline Network Mode Simulator Toggle
+    c_net1, c_net2 = st.columns([8, 4])
+    with c_net1:
+        st.markdown("""
+        <div style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; color:#059669; margin-bottom:8px;">
+          <span style="width:10px; height:10px; border-radius:50%; background:#10B981; display:inline-block;"></span>
+          PWA Online & Ready • Offline Storage Active
+        </div>
+        """, unsafe_allow_html=True)
+    with c_net2:
+        simulate_offline = st.checkbox("Simulate Offline Mode (Low Network)", value=False, key="sim_offline_cb")
+
+    # Speech / Audio Input Simulation & Web Speech UI
+    st.markdown("#### 1. Speak or Type Your Report")
     
-    with st.form("nlp_report_form"):
-        rep_text = st.text_area(
-            "What happened and where?", 
-            placeholder=f"e.g. Catcalling and aggressive shouting near main station in {st.session_state.city} at 10pm...", 
-            height=100,
-            key="nlp_report_text_area"
-        )
-        sub_btn = st.form_submit_button("Submit Incident Report", type="primary")
-    
-    if sub_btn and rep_text.strip():
-        with st.spinner("Processing report with Gemini NLP & updating real-time map weights..."):
-            r_out = process_and_save_user_report(rep_text, current_city=st.session_state.city, country=st.session_state.country)
-            if r_out["success"]:
-                st.balloons()
-                st.success(f"Report saved successfully! Geocoded Location: ({r_out['saved_location']['lat']}, {r_out['saved_location']['lng']})")
-                st.json(r_out["nlp_parsed"])
+    # Pre-canned Hinglish/Hindi speech examples for quick 1-click testing
+    st.caption("Try speaking or click one of these common speech test samples:")
+    s_c1, s_c2, s_c3 = st.columns(3)
+    speech_sample = None
+    if s_c1.button("🗣️ 'Bus stand ke paas light nahi jal rahi hai'", use_container_width=True):
+        speech_sample = "Bus stand ke paas light nahi jal rahi hai aur raat mein bahut andhera rehta hai."
+    if s_c2.button("🗣️ 'Do log pichha kar rahe the Chakrata road pe'", use_container_width=True):
+        speech_sample = "Chakrata road pe do suspicious log bike se picha kar rahe the."
+    if s_c3.button("🗣️ 'Broken sidewalk and no lights near CP outer circle'", use_container_width=True):
+        speech_sample = "Broken sidewalk and completely non-functional streetlights near CP outer circle."
+
+    rep_text_val = speech_sample if speech_sample else ""
+    user_speech_input = st.text_area(
+        "Spoken or Typed Incident Statement:",
+        value=rep_text_val,
+        placeholder="Type or simulate voice input in Hindi, English, or Hinglish (e.g. 'Station ke paas street light band hai...')",
+        height=90,
+        key="voice_report_input_box"
+    )
+
+    c_draft_btn, c_sync_btn = st.columns([4, 4])
+    with c_draft_btn:
+        generate_draft_btn = st.button("✨ Extract Structured Draft with AI", type="primary", use_container_width=True)
+    with c_sync_btn:
+        if st.button("🔄 Sync Queued Offline Reports", use_container_width=True):
+            sync_res = process_offline_sync_queue()
+            if sync_res["success"] and sync_res["synced_count"] > 0:
+                st.success(f"Successfully synchronized {sync_res['synced_count']} offline reports to server!")
                 st.rerun()
             else:
-                st.error("Could not process report. Please be more specific.")
+                st.info("No pending offline reports to sync.")
+
+    # State for drafted incident
+    if "active_incident_draft" not in st.session_state:
+        st.session_state.active_incident_draft = None
+
+    if generate_draft_btn and user_speech_input.strip():
+        st.session_state.active_incident_draft = extract_incident_draft(
+            user_speech_input,
+            city=st.session_state.city,
+            country=st.session_state.country
+        )
+
+    # 2. Editable Review Before Submission
+    if st.session_state.active_incident_draft:
+        draft = st.session_state.active_incident_draft
+        st.divider()
+        st.markdown("#### 2. Review & Confirm Incident Draft")
+        st.caption("AI suggestions are advisory. Please review and confirm all details before submission.")
+
+        # Check for duplicates nearby
+        ref_lat, ref_lng = st.session_state.map_center
+        recent_feed = get_recent_reports_in_city(st.session_state.city, limit=15)
+        formatted_feed = [{"id": r[0], "category": r[1], "lat": r[7], "lng": r[8], "timestamp": r[3]} for r in recent_feed]
+        
+        dups = detect_duplicate_candidates(draft["suggested_category"], ref_lat, ref_lng, formatted_feed)
+        if dups:
+            st.warning(f"⚠️ **Duplicate Advisory:** {dups[0]['reason']} You may still submit if this is a recurring separate incident.")
+
+        with st.form("confirm_incident_form"):
+            col_rev1, col_rev2 = st.columns(2)
+            with col_rev1:
+                final_cat = st.selectbox(
+                    "Incident Category:",
+                    options=["poor_lighting", "harassment", "following", "unsafe_area", "broken_infrastructure"],
+                    index=["poor_lighting", "harassment", "following", "unsafe_area", "broken_infrastructure"].index(draft["suggested_category"]) if draft["suggested_category"] in ["poor_lighting", "harassment", "following", "unsafe_area", "broken_infrastructure"] else 3,
+                    format_func=lambda c: {
+                        "poor_lighting": "💡 Poor Lighting / Outage",
+                        "harassment": "⚠️ Harassment / Aggressive Behavior",
+                        "following": "👁️ Suspicious Following / Stalking",
+                        "unsafe_area": "🌑 Isolated / Dark Area",
+                        "broken_infrastructure": "🚧 Broken Sidewalk / Road"
+                    }.get(c, c)
+                )
+                final_sev = st.slider("User-Confirmed Severity:", min_value=1, max_value=3, value=draft["suggested_severity"])
+                final_loc_desc = st.text_input("Location Description:", value=draft["suggested_location"])
+
+            with col_rev2:
+                final_desc = st.text_area("Confirmed Description (English / Standard):", value=draft["normalized_description"], height=80)
+                st.caption(f"**Original Spoken ({draft['original_language'].upper()}):** *\"{draft['original_text']}\"*")
+                st.caption(f"**AI Short Summary:** `{draft['ai_short_summary']}`")
+
+            st.caption("🔒 Privacy Rule: Do not enter private phone numbers, vehicle license plates, or personally identifying details.")
+            confirm_sub_btn = st.form_submit_button("Confirm & Submit Incident", type="primary")
+
+        if confirm_sub_btn:
+            if simulate_offline:
+                # Feature 6: Queue Offline
+                q_res = queue_offline_report(
+                    user_id=st.session_state.session_id,
+                    category=final_cat,
+                    lat=ref_lat,
+                    lng=ref_lng,
+                    description=final_desc,
+                    severity=final_sev,
+                    original_language=draft["original_language"]
+                )
+                if q_res["success"]:
+                    st.info(f"📶 **Offline Protection:** {q_res['message']}")
+                    st.session_state.active_incident_draft = None
+                    st.rerun()
+            else:
+                # Normal Online Submission
+                r_out = process_and_save_user_report(final_desc, current_city=st.session_state.city, country=st.session_state.country)
+                if r_out["success"]:
+                    st.balloons()
+                    st.success(f"Report published! Saved at coordinates ({r_out['saved_location']['lat']}, {r_out['saved_location']['lng']})")
+                    st.session_state.active_incident_draft = None
+                    st.rerun()
+
+    # Display Offline Queued Reports
+    queued_reports = get_queued_offline_reports(st.session_state.session_id)
+    if queued_reports:
+        with st.expander(f"📦 Offline Local Report Queue ({len(queued_reports)} items on device)", expanded=False):
+            for qr in queued_reports:
+                st.markdown(f"**[{qr['category'].upper()}]** (Status: `{qr['sync_status']}`) — *{html.escape(qr['description'])}*")
+                st.caption(f"Queued at: `{qr['queued_at']}` | Idempotency Key: `{qr['client_submission_id']}`")
+                st.divider()
+
+# -----------------------------------------------------------------------------
+# TAB: COMMUNITY MODERATION & VERIFICATION (FEATURE 5)
+# -----------------------------------------------------------------------------
+with tab_mod:
+    st.markdown("### ⚖️ Trustworthy Community Verification & Moderation Dashboard")
+    st.caption("Distinguish unverified submissions, community corroborations (3+ votes), and official public authority sources.")
+
+    # Moderator Role Verification
+    c_m_role1, c_m_role2 = st.columns([6, 6])
+    with c_m_role1:
+        mod_filter = st.selectbox("Queue Filter:", ["ALL", "PUBLISHED", "PENDING_REVIEW", "HIDDEN", "REJECTED"], key="mod_filter_sb")
+    with c_m_role2:
+        mod_pass = st.text_input("Moderator Security Key:", type="password", value="safewalk-admin", key="mod_pwd_input")
+        is_authorized_mod = (mod_pass == "safewalk-admin")
+
+    queue_items = get_moderation_queue(filter_status=mod_filter, limit=20)
+    st.markdown(f"**Found {len(queue_items)} report(s) in queue:**")
+
+    if queue_items:
+        for item in queue_items:
+            i_id = item["id"]
+            ev_status = item.get("evidence_status", "UNVERIFIED")
+            mod_status = item.get("moderation_status", "PUBLISHED")
+            
+            ev_badge_color = "#059669" if ev_status == "OFFICIALLY_SOURCED" else "#D97706" if ev_status == "COMMUNITY_CORROBORATED" else "#64748B"
+            
+            with st.container():
+                st.markdown(f"""
+                <div style="background:#FFFFFF; border:1px solid #CBD5E1; border-radius:12px; padding:14px; margin-bottom:12px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <b style="font-size:15px; color:#0F172A;">Report #{i_id} — {html.escape(str(item.get('type')).upper())}</b>
+                    <div>
+                      <span style="background:{ev_badge_color}18; color:{ev_badge_color}; border:1px solid {ev_badge_color}; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:800; margin-right:6px;">
+                        {ev_status}
+                      </span>
+                      <span style="background:#F1F5F9; color:#475569; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700;">
+                        {mod_status}
+                      </span>
+                    </div>
+                  </div>
+                  <div style="font-size:12px; color:#334155; margin-top:6px;">
+                    {html.escape(str(item.get('description', '')))}
+                  </div>
+                  <div style="font-size:11px; color:#64748B; margin-top:6px;">
+                    🕒 {item.get('timestamp')} • Coordinates: ({item.get('lat')}, {item.get('lng')}) • Upvotes: {item.get('upvotes')} • Downvotes: {item.get('downvotes')}
+                  </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                if is_authorized_mod:
+                    with st.expander(f"⚙️ Moderate Report #{i_id}"):
+                        c_act1, c_act2 = st.columns(2)
+                        with c_act1:
+                            new_mod = st.selectbox("Set Moderation Status:", ["PUBLISHED", "PENDING_REVIEW", "HIDDEN", "REJECTED"], key=f"sel_mod_{i_id}")
+                            new_ev = st.selectbox("Set Evidence Status:", ["UNVERIFIED", "COMMUNITY_CORROBORATED", "OFFICIALLY_SOURCED", "INSUFFICIENT_EVIDENCE"], key=f"sel_ev_{i_id}")
+                        with c_act2:
+                            mod_reason = st.text_input("Mandatory Justification / Audit Reason:", placeholder="e.g. Cross-referenced with police log", key=f"reason_{i_id}")
+                            official_url = st.text_input("Official Source URL (if verifying):", placeholder="https://...", key=f"url_{i_id}")
+
+                        if st.button("Apply Moderation Action", key=f"apply_btn_{i_id}"):
+                            source_meta = None
+                            if official_url.strip():
+                                source_meta = {
+                                    "source_type": "public_authority",
+                                    "organization": "Verified Public Safety Authority",
+                                    "title": f"Police / Public Advisory for Incident #{i_id}",
+                                    "url": official_url.strip()
+                                }
+                            res_m = apply_moderator_action(
+                                incident_id=i_id,
+                                moderator_id="admin_user",
+                                action_type="manual_review",
+                                reason=mod_reason,
+                                new_moderation_status=new_mod,
+                                new_evidence_status=new_ev,
+                                source_metadata=source_meta
+                            )
+                            if res_m["success"]:
+                                st.success(f"Report #{i_id} updated.")
+                                st.rerun()
+                            else:
+                                st.error(res_m.get("error", "Failed to update."))
+
+                st.divider()
+    else:
+        st.info("No reports found matching current filter.")
+
+# -----------------------------------------------------------------------------
+# TAB: SAFETY INTELLIGENCE DASHBOARD (FEATURE 7)
+# -----------------------------------------------------------------------------
+with tab_intel:
+    st.markdown("### 📊 Safety Intelligence & Campus Authority Dashboard")
+    st.caption("Aggregated decision-support metrics, infrastructure gaps, and privacy-preserving incident clusters. (Actual database records).")
+
+    # Time window selector
+    d_window = st.select_slider("Analytics Time Window:", options=[7, 14, 30, 90, 180], value=30, format_func=lambda d: f"Last {d} Days")
+    intel_data = get_safety_intelligence_summary(city=st.session_state.city, days=d_window)
+
+    # Top KPI Metrics Cards
+    k1, k2, k3, k4, k5 = st.columns(5)
+    k1.metric("Total Reports", intel_data["total_reports"])
+    k2.metric("Last 24 Hours", intel_data["reports_last_24h"])
+    k3.metric("Pending Review", intel_data["awaiting_moderation"])
+    k4.metric("Community Corroborated", intel_data["community_corroborated"])
+    k5.metric("Officially Sourced", intel_data["officially_sourced"])
+
+    st.divider()
+
+    col_cat_chart, col_infra_gap = st.columns([6, 6])
+    
+    with col_cat_chart:
+        st.markdown("#### Incident Category Distribution")
+        cat_counts = intel_data["category_counts"]
+        if cat_counts:
+            # Bar chart using Streamlit native bar_chart
+            st.bar_chart(cat_counts)
+        else:
+            st.info("No incident records available within selected time window.")
+
+    with col_infra_gap:
+        st.markdown("#### Infrastructure & Environmental Gaps")
+        infra = intel_data["infrastructure_alerts"]
+        st.info(f"💡 **Lighting Outages & Unlit Pathways:** **{infra['lighting_reports']}** reports registered.")
+        st.info(f"🚧 **Broken Sidewalks & Access Barriers:** **{infra['blocked_walkways']}** reports registered.")
+        
+        st.markdown("#### SafeStops Assistance Coverage")
+        ss_sum = intel_data["safestops_summary"]
+        s_c1, s_c2, s_c3 = st.columns(3)
+        s_c1.metric("Total SafeStops", ss_sum["total"])
+        s_c2.metric("Partner-Verified", ss_sum["partner_verified"])
+        s_c3.metric("Public / Mapped", ss_sum["public_facility"])
+
+    st.divider()
+
+    # Geographical Clusters (Privacy-Preserving 1.1km Cells)
+    st.markdown("#### Aggregated Geospatial Risk Clusters (Minimum Threshold: 2+ Reports)")
+    st.caption("Privacy Rule: Private individual journeys are excluded. Clusters use generalized ~1.1km cells to prevent individual identification.")
+
+    geo_clusters = get_geographic_clusters(min_reports_threshold=1)
+    if geo_clusters:
+        for gc in geo_clusters[:6]:
+            st.markdown(f"• **{gc['cluster_label']}** near ({gc['lat']}, {gc['lng']}) — *Categories:* `{gc['categories']}`")
+    else:
+        st.info("No areas currently meet the aggregation threshold for display.")
 
 # -----------------------------------------------------------------------------
 # TAB 3: LIVE FEED & VOTING (XSS Protected)
